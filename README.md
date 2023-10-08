@@ -12,11 +12,15 @@ gem "capistrano-nomad"
 
 And then execute:
 
-    $ bundle install
+```shell
+bundle install
+```
 
 Or install it yourself as:
 
-    $ gem install capistrano-nomad
+```shell
+gem install capistrano-nomad
+```
 
 ## Usage
 
