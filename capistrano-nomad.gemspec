@@ -29,13 +29,13 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   # Uncomment to register a new dependency of your gem
-  spec.add_dependency "activesupport", "7.0.8"
+  spec.add_dependency "activesupport"
   spec.add_dependency "byebug"
-  spec.add_dependency "capistrano", "3.14.1"
-  spec.add_dependency "git", "1.10.2"
+  spec.add_dependency "capistrano", "~> 3.0"
+  spec.add_dependency "git"
   spec.add_dependency "rake", "~> 13.0"
-  spec.add_dependency "sshkit", "1.21.2"
-  spec.add_dependency "sshkit-interactive", "0.3.0"
+  spec.add_dependency "sshkit"
+  spec.add_dependency "sshkit-interactive"
 
   # For more information and examples about making a new gem, check out our
   # guide at: https://bundler.io/guides/creating_gem.html
