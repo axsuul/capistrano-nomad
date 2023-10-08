@@ -1,0 +1,45 @@
+PATH
+  remote: .
+  specs:
+    capistrano-nomad (0.1.0)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    activesupport (7.0.8)
+      concurrent-ruby (~> 1.0, >= 1.0.2)
+      i18n (>= 1.6, < 2)
+      minitest (>= 5.1)
+      tzinfo (~> 2.0)
+    concurrent-ruby (1.2.2)
+    git (1.10.2)
+      rchardet (~> 1.8)
+    i18n (1.14.1)
+      concurrent-ruby (~> 1.0)
+    minitest (5.20.0)
+    net-scp (4.0.0)
+      net-ssh (>= 2.6.5, < 8.0.0)
+    net-ssh (7.2.0)
+    rake (13.0.6)
+    rchardet (1.8.0)
+    sshkit (1.21.2)
+      net-scp (>= 1.1.2)
+      net-ssh (>= 2.8.0)
+    sshkit-interactive (0.3.0)
+      sshkit (~> 1.12)
+    tzinfo (2.0.6)
+      concurrent-ruby (~> 1.0)
+
+PLATFORMS
+  arm64-darwin-21
+
+DEPENDENCIES
+  activesupport (= 7.0.8)
+  capistrano-nomad!
+  git (= 1.10.2)
+  rake (~> 13.0)
+  sshkit (= 1.21.2)
+  sshkit-interactive (= 0.3.0)
+
+BUNDLED WITH
+   2.3.5
