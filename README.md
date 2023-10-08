@@ -24,6 +24,32 @@ gem install capistrano-nomad
 
 ## Usage
 
+Add to `Capfile`
+
+```ruby
+require "capistrano/nomad"
+install_plugin Capistrano::Nomad
+```
+
+Define Nomad jobs within `deploy.rb`
+
+```ruby
+nomad_job :app
+nomad_job :redis
+
+nomad_namespace :analytics do
+  nomad_job :grafana
+end
+```
+
+Utilize tasks
+
+```shell
+cap production nomad:app:deploy
+cap production nomad:redis:purge
+cap production nomad:analytics:grafana:deploy
+```
+
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
