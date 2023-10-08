@@ -1,5 +1,4 @@
 require "active_support/core_ext/string"
-require "byebug"
 require "sshkit/interactive"
 
 class NomadErbNamespace

@@ -1,20 +1,19 @@
 # frozen_string_literal: true
 
-require_relative "lib/capistrano/nomad"
+require_relative "lib/capistrano/nomad/version"
 
 Gem::Specification.new do |spec|
   spec.name = "capistrano-nomad"
   spec.version = Capistrano::Nomad::VERSION
   spec.authors = ["James Hu"]
 
-  spec.summary = "Work with Nomad via Capistrano"
-  spec.description = "Work with Nomad via Capistrano"
+  spec.summary = "Capistrano plugin for deploying and managing Nomad jobs"
+  spec.description = "Capistrano plugin for deploying and managing Nomad jobs"
   spec.homepage = "https://github.com/axsuul/capistrano-nomad"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 2.6.0"
 
-  spec.metadata["allowed_push_host"] = "TODO: Set to your gem server 'https://example.com'"
-
+  spec.metadata["allowed_push_host"] = "https://rubygems.org"
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = "https://github.com/axsuul/capistrano-nomad"
 
@@ -30,7 +29,13 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   # Uncomment to register a new dependency of your gem
-  # spec.add_dependency "example-gem", "~> 1.0"
+  spec.add_dependency "activesupport", "7.0.8"
+  spec.add_dependency "byebug"
+  spec.add_dependency "capistrano", "3.14.1"
+  spec.add_dependency "git", "1.10.2"
+  spec.add_dependency "rake", "~> 13.0"
+  spec.add_dependency "sshkit", "1.21.2"
+  spec.add_dependency "sshkit-interactive", "0.3.0"
 
   # For more information and examples about making a new gem, check out our
   # guide at: https://bundler.io/guides/creating_gem.html

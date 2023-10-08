@@ -7,8 +7,6 @@ require_relative "nomad/helpers/nomad"
 
 module Capistrano
   class Nomad < Capistrano::Plugin
-    VERSION = "0.1.0".freeze
-
     def set_defaults
       set_if_empty(:nomad_jobs_path, "/nomad/jobs")
       set_if_empty(:nomad_var_files_path, "/nomad/var_files")
