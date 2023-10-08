@@ -1,10 +1,8 @@
 # frozen_string_literal: true
 
-require_relative "lib/capistrano/nomad/version"
-
 Gem::Specification.new do |spec|
   spec.name = "capistrano-nomad"
-  spec.version = Capistrano::Nomad::VERSION
+  spec.version = "0.2.1"
   spec.authors = ["James Hu"]
 
   spec.summary = "Capistrano plugin for deploying and managing Nomad jobs"
@@ -29,7 +27,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   # Uncomment to register a new dependency of your gem
-  spec.add_dependency "activesupport"
+  spec.add_dependency "activesupport", "~> 7.0", "<= 7.0.8"
   spec.add_dependency "byebug"
   spec.add_dependency "capistrano", "~> 3.0"
   spec.add_dependency "git"
