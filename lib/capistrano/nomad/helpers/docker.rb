@@ -61,16 +61,18 @@ def capistrano_nomad_build_docker_image(image_type, path, *args)
       capistrano_nomad_build_docker_image_alias(image_type, git_commit_id),
       capistrano_nomad_build_docker_image_alias(image_type, "latest"),
       "trunk/#{fetch(:stage)}/#{image_type}:latest",
-    ].each do |tag|
-      args << "--tag #{tag}"
-    end
+    ]
+      .compact
+      .each do |tag|
+        args << "--tag #{tag}"
+      end
 
     # If any of these files exist then we're in the middle of rebase so we should interrupt
-    if ["rebase-merge", "rebase-apply"].any? { |f| File.exist?("#{fetch(:git).dir.path}/.git/#{f}") }
+    if ["rebase-merge", "rebase-apply"].any? { |f| File.exist?("#{capistrano_nomad_git.dir.path}/.git/#{f}") }
       raise StandardError, "still in the middle of git rebase, interrupting docker image build"
     end
 
-    system "docker build #{args.join(' ')} #{path}"
+    system "docker build #{args.join(' ')} .#{capistrano_nomad_root.join(path)}"
   end
 end
 

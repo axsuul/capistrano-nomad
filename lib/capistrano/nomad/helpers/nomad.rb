@@ -36,9 +36,6 @@ class NomadErbNamespace
 end
 
 def capistrano_nomad_build_file_path(parent_path, basename, namespace: nil)
-  # Remove initial slash if it exists
-  parent_path = parent_path[1..] if parent_path[0] == "/"
-
   segments = [parent_path]
   segments << namespace if namespace
   segments << "#{basename}.hcl"
@@ -54,19 +51,27 @@ def capistrano_nomad_build_base_var_file_path(*args)
   capistrano_nomad_build_file_path(fetch(:nomad_var_files_path), *args)
 end
 
-def capistrano_nomad_build_local_job_path(name, *args)
-  local_path = fetch(:root).join(capistrano_nomad_build_base_job_path(name, *args))
+def capistrano_nomad_build_local_path(path, *args)
+  local_path = ".#{capistrano_nomad_root.join(path)}"
 
   # Determine if it has .erb appended or not
   [local_path, "#{local_path}.erb"].find { |path| File.exist?(path) }
 end
 
+def capistrano_nomad_build_local_job_path(name, *args)
+  capistrano_nomad_build_local_path(capistrano_nomad_build_base_job_path(name, *args))
+end
+
+def capistrano_nomad_build_local_var_file_path(name, *args)
+  capistrano_nomad_build_local_path(capistrano_nomad_build_base_var_file_path(name, *args))
+end
+
 def capistrano_nomad_build_release_job_path(*args)
-  "#{release_path}/#{capistrano_nomad_build_base_job_path(*args)}"
+  "#{release_path}#{capistrano_nomad_build_base_job_path(*args)}"
 end
 
 def capistrano_nomad_build_release_var_file_path(*args)
-  "#{release_path}/#{capistrano_nomad_build_base_var_file_path(*args)}"
+  "#{release_path}#{capistrano_nomad_build_base_var_file_path(*args)}"
 end
 
 def capistrano_nomad_execute_nomad_command(*args)
@@ -158,7 +163,7 @@ def capistrano_nomad_build_jobs_docker_images(names, *args)
 
   return false if image_types.empty?
 
-  image_types.each { |i| capistrano_nomad_build_docker_image_for_type(i, *args) }
+  image_types.each { |i| capistrano_nomad_build_docker_image_for_type(i) }
 end
 
 def capistrano_nomad_push_jobs_docker_images(names, *args)
@@ -166,7 +171,7 @@ def capistrano_nomad_push_jobs_docker_images(names, *args)
 
   return false if image_types.empty?
 
-  image_types.each { |i| capistrano_nomad_push_docker_image_for_type(i, *args) }
+  image_types.each { |i| capistrano_nomad_push_docker_image_for_type(i) }
 end
 
 def capistrano_nomad_assemble_jobs_docker_images(names, *args)
@@ -180,7 +185,7 @@ def capistrano_nomad_upload_jobs(names, *args)
 
   uniq_var_files.each do |var_file|
     capistrano_nomad_upload_file(
-      local_path: capistrano_nomad_build_base_var_file_path(var_file, *args),
+      local_path: capistrano_nomad_build_local_var_file_path(var_file, *args),
       remote_path: capistrano_nomad_build_release_var_file_path(var_file, *args),
     )
   end
@@ -196,7 +201,7 @@ def capistrano_nomad_upload_jobs(names, *args)
       file_basename = nomad_job_options[:template] || name
 
       capistrano_nomad_upload_file(
-        local_path: capistrano_nomad_build_base_job_path(file_basename, *args),
+        local_path: capistrano_nomad_build_local_job_path(file_basename, *args),
         remote_path: capistrano_nomad_build_release_job_path(name, *args),
         erb_vars: erb_vars,
       )
