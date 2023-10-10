@@ -55,7 +55,11 @@ def capistrano_nomad_build_local_path(path, *args)
   local_path = ".#{capistrano_nomad_root.join(path)}"
 
   # Determine if it has .erb appended or not
-  [local_path, "#{local_path}.erb"].find { |path| File.exist?(path) }
+  found_local_path = [local_path, "#{local_path}.erb"].find { |path| File.exist?(path) }
+
+  raise StandardError, "Could not find local path: #{path}" unless found_local_path
+
+  found_local_path
 end
 
 def capistrano_nomad_build_local_job_path(name, *args)
