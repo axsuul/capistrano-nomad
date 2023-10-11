@@ -1,4 +1,5 @@
 require "capistrano/plugin"
+require "byebug"
 require_relative "nomad/helpers/base"
 require_relative "nomad/helpers/docker"
 require_relative "nomad/helpers/dsl"

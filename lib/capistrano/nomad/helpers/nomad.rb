@@ -1,7 +1,7 @@
 require "active_support/core_ext/string"
 require "sshkit/interactive"
 
-class NomadErbNamespace
+class CapistranoNomadErbNamespace
   def initialize(context:, vars: {})
     @context = context
 
@@ -134,7 +134,7 @@ def capistrano_nomad_upload_file(local_path:, remote_path:, erb_vars: {})
 
   # We use a custom namespace class so that we can include helper methods into the namespace to make them available for
   # template to access
-  namespace = NomadErbNamespace.new(
+  namespace = CapistranoNomadErbNamespace.new(
     context: self,
     vars: final_erb_vars,
   )
@@ -159,7 +159,7 @@ def capistrano_nomad_fetch_jobs_names_by_namespace
 end
 
 def capistrano_nomad_fetch_jobs_docker_image_types(names, namespace: nil)
-  names.map { |n| fetch(:nomad_jobs).dig(namespace, n.to_sym, :image_types) }.flatten.compact.uniq
+  names.map { |n| fetch(:nomad_jobs).dig(namespace, n.to_sym, :docker_image_types) }.flatten.compact.uniq
 end
 
 def capistrano_nomad_build_jobs_docker_images(names, *args)
