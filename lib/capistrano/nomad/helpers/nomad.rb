@@ -106,7 +106,7 @@ def capistrano_nomad_execute_nomad_command(*args)
 end
 
 def capistrano_nomad_exec_within_job(name, command, namespace: nil)
-  capistrano_nomad_execute_nomad_command(:alloc, :exec, { namespace: namespace, task: name, job: name }, command)
+  capistrano_nomad_execute_nomad_command(:alloc, :exec, { namespace: namespace, task: name, job: true }, name, command)
 end
 
 def capistrano_nomad_upload_file(local_path:, remote_path:, erb_vars: {})
@@ -122,7 +122,7 @@ def capistrano_nomad_upload_file(local_path:, remote_path:, erb_vars: {})
   erb = ERB.new(File.open(local_path).read, trim_mode: "-")
 
   final_erb_vars = {
-    git_commit_id: fetch(:current_revision) || capistrano_nomad_fetch_git_commit_id,
+    git_commit_id: fetch(:current_revision) || capistrano_nomad_git_commit_id,
     docker_image_types: docker_image_types,
   }
 

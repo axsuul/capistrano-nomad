@@ -76,18 +76,12 @@ def capistrano_nomad_build_docker_image_for_type(image_type)
     "--platform linux/amd64",
   ]
 
-  build_args =
-    if attributes[:build_args].is_a?(Proc)
-      proc_args = attributes[:build_args].arity == 1 ? [capistrano_nomad_fetch_git_commit_id] : []
-
-      attributes[:build_args].call(*proc_args)
-    else
-      attributes[:build_args]
-    end
-
   if (target = attributes[:target])
     args << "--target #{target}"
   end
+
+  build_args = attributes[:build_args]
+  build_args = build_args.call if build_args&.is_a?(Proc)
 
   (build_args || []).each do |key, value|
     args << "--build-arg #{key}=#{value}"

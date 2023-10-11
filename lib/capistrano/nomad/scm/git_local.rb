@@ -6,7 +6,7 @@ class Capistrano::SCM::GitLocal < Capistrano::SCM::Plugin
     namespace :git_local do
       task :set_current_revision do
         on release_roles :manager do
-          set :current_revision, capistrano_nomad_fetch_git_commit_id
+          set :current_revision, capistrano_nomad_git_commit_id
         end
       end
 
