@@ -42,12 +42,20 @@ nomad_namespace :analytics do
 end
 ```
 
-Utilize tasks
+Deploy with
 
 ```shell
 cap production nomad:app:deploy
 cap production nomad:redis:purge
 cap production nomad:analytics:grafana:deploy
+```
+
+Open console with
+
+```shell
+cap production nomad:app:console
+cap production nomad:app:console TASK=custom-task-name
+cap production nomad:analytics:grafana:console
 ```
 
 ## Development

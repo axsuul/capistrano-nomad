@@ -107,9 +107,9 @@ def nomad_job(name, attributes = {})
         end
       end
 
-      desc "Open console to #{description_name} job"
+      desc "Open console to #{description_name} job. Specify task by passing TASK environment variable"
       task :console do
-        capistrano_nomad_exec_within_job(name, "/bin/bash", namespace: namespace)
+        capistrano_nomad_exec_within_job(name, "/bin/bash", namespace: namespace, task: ENV["TASK"].presence)
       end
     end
   end

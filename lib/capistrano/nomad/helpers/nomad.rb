@@ -105,8 +105,14 @@ def capistrano_nomad_execute_nomad_command(*args)
   end
 end
 
-def capistrano_nomad_exec_within_job(name, command, namespace: nil)
-  capistrano_nomad_execute_nomad_command(:alloc, :exec, { namespace: namespace, task: name, job: true }, name, command)
+def capistrano_nomad_exec_within_job(name, command, namespace: nil, task: nil)
+  capistrano_nomad_execute_nomad_command(
+    :alloc,
+    :exec,
+    { namespace: namespace, task: task || name, job: true },
+    name,
+    command,
+  )
 end
 
 def capistrano_nomad_upload_file(local_path:, remote_path:, erb_vars: {})
