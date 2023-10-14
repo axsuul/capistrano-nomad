@@ -4,12 +4,7 @@ namespace :nomad do
     capistrano_nomad_execute_nomad_command(:version)
   end
 
-  namespace :docker_images do
-    desc "Used for adding hooks before or after pushing Docker images"
-    task :push
-  end
-
-  namespace :jobs do
+  namespace :all do
     desc "Build all job Docker images"
     task :build do
       capistrano_nomad_fetch_jobs_names_by_namespace.each do |namespace, names|
@@ -58,6 +53,11 @@ namespace :nomad do
         capistrano_nomad_purge_jobs(names, namespace: namespace)
       end
     end
+  end
+
+  namespace :docker_images do
+    desc "Used for adding hooks before or after pushing Docker images"
+    task :push
   end
 
   namespace :system do

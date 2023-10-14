@@ -42,7 +42,13 @@ nomad_namespace :analytics do
 end
 ```
 
-Deploy with
+Deploy all with
+
+```shell
+cap production nomad:all:deploy
+```
+
+Deploy individually with
 
 ```shell
 cap production nomad:app:deploy
