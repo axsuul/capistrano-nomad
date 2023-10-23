@@ -78,7 +78,7 @@ def capistrano_nomad_build_release_var_file_path(*args)
   "#{release_path}#{capistrano_nomad_build_base_var_file_path(*args)}"
 end
 
-def capistrano_nomad_execute_nomad_command(*args)
+def capistrano_nomad_run_nomad_command(kind, *args)
   converted_args = args.each_with_object([]) do |arg, collection|
     # If hash then convert it as options
     if arg.is_a?(Hash)
@@ -97,22 +97,60 @@ def capistrano_nomad_execute_nomad_command(*args)
     end
   end
 
+  # Ignore errors
+  public_send(kind, :nomad, *converted_args, raise_on_non_zero_exit: false)
+end
+
+def capistrano_nomad_execute_nomad_command(*args)
   on(roles(:manager)) do |host|
     run_interactively(host) do
-      # Ignore errors
-      execute(:nomad, *converted_args, raise_on_non_zero_exit: false)
+      capistrano_nomad_run_nomad_command(:execute, *args)
     end
   end
 end
 
+def capistrano_nomad_capture_nomad_command(*args)
+  output = nil
+
+  on(roles(:manager)) do |host|
+    output = capistrano_nomad_run_nomad_command(:capture, *args)
+  end
+
+  output
+end
+
 def capistrano_nomad_exec_within_job(name, command, namespace: nil, task: nil)
-  capistrano_nomad_execute_nomad_command(
-    :alloc,
-    :exec,
-    { namespace: namespace, task: task || name, job: true },
-    name,
-    command,
-  )
+  on(roles(:manager)) do
+    task = name unless task
+
+    # Find alloc id that contains task
+    output = capistrano_nomad_capture_nomad_command(
+      :job,
+      :allocs,
+      { namespace: namespace, t: "'{{range .}}{{ .ID }},{{ .TaskGroup }}|{{end}}'" },
+      name,
+    )
+    alloc_id = output.split("|").map { |s| s.split(",") }.find { |_, t| t == task.to_s }&.first
+
+    if alloc_id
+      capistrano_nomad_execute_nomad_command(
+        :alloc,
+        :exec,
+        { namespace: namespace, task: task },
+        alloc_id,
+        command,
+      )
+    else
+      # If alloc can't be determined then choose at random
+      capistrano_nomad_execute_nomad_command(
+        :alloc,
+        :exec,
+        { namespace: namespace, job: true },
+        task,
+        command,
+      )
+    end
+  end
 end
 
 def capistrano_nomad_upload_file(local_path:, remote_path:, erb_vars: {})

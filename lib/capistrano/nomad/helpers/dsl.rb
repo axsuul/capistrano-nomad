@@ -90,15 +90,18 @@ def nomad_job(name, attributes = {})
 
       desc "Restart #{description_name} job"
       task :restart do
-        on roles :manager do
+        on(roles(:manager)) do
           # We can't restart the job directly so we'll need to fetch all its running allocs and restart each of one
           # individually instead
-          running_alloc_ids_output = capture(
-            "nomad job allocs " \
-            "-t '{{range .}}{{if eq .ClientStatus \"running\"}}{{ println .ID}}{{end}}{{end}}' " \
-            "#{name}",
+          running_alloc_ids_output = capistrano_nomad_capture_nomad_command(
+            :job,
+            :allocs,
+            {
+              namespace: namespace,
+              t: "'{{range .}}{{if eq .ClientStatus \"running\"}}{{ println .ID}}{{end}}{{end}}'",
+            },
+            name,
           )
-
           running_alloc_ids = running_alloc_ids_output.strip.split("\n")
 
           running_alloc_ids.each do |alloc_id|
