@@ -35,6 +35,10 @@ class CapistranoNomadErbNamespace
   # rubocop:enable Style/MissingRespondToMissing
 end
 
+def capistrano_nomad_ensure_absolute_path(path)
+  path[0] == "/" ? path : "/#{path}"
+end
+
 def capistrano_nomad_build_file_path(parent_path, basename, namespace: nil)
   segments = [parent_path]
   segments << namespace if namespace
@@ -71,11 +75,11 @@ def capistrano_nomad_build_local_var_file_path(name, *args)
 end
 
 def capistrano_nomad_build_release_job_path(*args)
-  "#{release_path}#{capistrano_nomad_build_base_job_path(*args)}"
+  "#{release_path}#{capistrano_nomad_ensure_absolute_path(capistrano_nomad_build_base_job_path(*args))}"
 end
 
 def capistrano_nomad_build_release_var_file_path(*args)
-  "#{release_path}#{capistrano_nomad_build_base_var_file_path(*args)}"
+  "#{release_path}#{capistrano_nomad_ensure_absolute_path(capistrano_nomad_build_base_var_file_path(*args))}"
 end
 
 def capistrano_nomad_run_nomad_command(kind, *args)

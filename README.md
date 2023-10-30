@@ -34,10 +34,21 @@ install_plugin Capistrano::Nomad
 Within `deploy.rb`
 
 ```ruby
+set :nomad_jobs_path, "nomad/jobs"
+set :nomad_var_files_path, "nomad/vars"
+
+# Accessible in all .erb files
+set :nomad_erb_vars, (lambda do
+  {
+    env_name: fetch(:stage).to_sym,
+    domain: fetch(:domain),
+    foo: "bar,"
+  }
+end)
 
 # Docker image types
-nomad_docker_image_type :app,
-  path: "backend",
+nomad_docker_image_type :backend,
+  path: "local/path/backend",
   alias: ->(image_type:) { "gcr.io/axsuul/#{image_type}" },
   target: "release",
   build_args: { foo: "bar" }
@@ -46,11 +57,13 @@ nomad_docker_image_type :redis,
   alias: "gcr.io/axsuul/redis"
 
 # Jobs
-nomad_job :app
+nomad_job :frontend
+nomad_job :backend, docker_image_types: [:backend], var_files: [:rails]
 nomad_job :redis, docker_image_types: [:redis]
 
 nomad_namespace :analytics do
   nomad_job :grafana
+  nomad_job :"node-exporter"
 end
 ```
 
