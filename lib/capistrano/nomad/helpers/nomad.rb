@@ -51,11 +51,11 @@ def capistrano_nomad_build_base_var_file_path(*args)
   capistrano_nomad_build_file_path(fetch(:nomad_var_files_path), *args)
 end
 
-def capistrano_nomad_build_local_path(path, *args)
-  local_path = ".#{capistrano_nomad_root.join(path)}"
+def capistrano_nomad_build_local_path(path)
+  local_path = capistrano_nomad_root.join(path)
 
   # Determine if it has .erb appended or not
-  found_local_path = [local_path, "#{local_path}.erb"].find { |path| File.exist?(path) }
+  found_local_path = [local_path, "#{local_path}.erb"].find { |each_local_path| File.exist?(each_local_path) }
 
   raise StandardError, "Could not find local path: #{path}" unless found_local_path
 

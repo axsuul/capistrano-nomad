@@ -9,8 +9,8 @@ require_relative "nomad/helpers/nomad"
 module Capistrano
   class Nomad < Capistrano::Plugin
     def set_defaults
-      set_if_empty(:nomad_jobs_path, "/nomad/jobs")
-      set_if_empty(:nomad_var_files_path, "/nomad/var_files")
+      set_if_empty(:nomad_jobs_path, "nomad/jobs")
+      set_if_empty(:nomad_var_files_path, "nomad/var_files")
       set_if_empty(:nomad_docker_image_alias, ->(**) {})
     end
 

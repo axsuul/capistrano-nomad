@@ -31,11 +31,23 @@ require "capistrano/nomad"
 install_plugin Capistrano::Nomad
 ```
 
-Define Nomad jobs within `deploy.rb`
+Within `deploy.rb`
 
 ```ruby
+
+# Docker image types
+nomad_docker_image_type :app,
+  path: "backend",
+  alias: ->(image_type:) { "gcr.io/axsuul/#{image_type}" },
+  target: "release",
+  build_args: { foo: "bar" }
+nomad_docker_image_type :redis,
+  path: "/absolute/path/redis",
+  alias: "gcr.io/axsuul/redis"
+
+# Jobs
 nomad_job :app
-nomad_job :redis
+nomad_job :redis, docker_image_types: [:redis]
 
 nomad_namespace :analytics do
   nomad_job :grafana

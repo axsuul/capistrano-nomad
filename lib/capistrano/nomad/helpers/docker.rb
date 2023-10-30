@@ -101,7 +101,7 @@ def capistrano_nomad_build_docker_image_for_type(image_type)
         image_alias_args << "--tag #{tag}"
       end
 
-    execute("docker build #{image_alias_args.join(' ')} .#{capistrano_nomad_root.join(attributes[:path])}")
+    execute("docker build #{image_alias_args.join(' ')} #{capistrano_nomad_root.join(attributes[:path])}")
   end
 end
 
