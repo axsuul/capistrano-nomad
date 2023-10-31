@@ -321,6 +321,12 @@ def capistrano_nomad_deploy_jobs(names, *args)
   capistrano_nomad_upload_run_jobs(names, *args)
 end
 
+def capistrano_nomad_stop_jobs(names, namespace: nil)
+  names.each do |name|
+    capistrano_nomad_execute_nomad_command(:job, :stop, { namespace: namespace }, name)
+  end
+end
+
 def capistrano_nomad_restart_jobs(names, namespace: nil)
   names.each do |name|
     capistrano_nomad_execute_nomad_command(:job, :restart, { namespace: namespace }, name)

@@ -58,16 +58,6 @@ def nomad_job(name, attributes = {})
         capistrano_nomad_rerun_jobs([name], namespace: namespace)
       end
 
-      desc "Purge #{description_name} job"
-      task :purge do
-        capistrano_nomad_purge_jobs([name], namespace: namespace, is_detached: false)
-      end
-
-      desc "Display status of #{description_name} job"
-      task :status do
-        capistrano_nomad_display_job_status(name, namespace: namespace)
-      end
-
       desc "Upload and plan #{description_name} job"
       task :upload_plan do
         capistrano_nomad_upload_plan_jobs([name], namespace: namespace)
@@ -91,6 +81,21 @@ def nomad_job(name, attributes = {})
       desc "Restart #{description_name} job"
       task :restart do
         capistrano_nomad_restart_jobs([name], namespace: namespace)
+      end
+
+      desc "Stop #{description_name} job"
+      task :stop do
+        capistrano_nomad_stop_jobs([name], namespace: namespace)
+      end
+
+      desc "Purge #{description_name} job"
+      task :purge do
+        capistrano_nomad_purge_jobs([name], namespace: namespace, is_detached: false)
+      end
+
+      desc "Display status of #{description_name} job"
+      task :status do
+        capistrano_nomad_display_job_status(name, namespace: namespace)
       end
 
       desc "Open console to #{description_name} job. Specify task by passing TASK environment variable"
