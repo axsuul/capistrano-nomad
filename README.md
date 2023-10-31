@@ -60,10 +60,11 @@ nomad_docker_image_type :redis,
 nomad_job :frontend
 nomad_job :backend, docker_image_types: [:backend], var_files: [:rails]
 nomad_job :redis, docker_image_types: [:redis]
+nomad_job :"traefik-default", template: :traefik, erb_vars: { role: :default }
+nomad_job :"traefik-secondary", template: :traefik, erb_vars: { role: :secondary }
 
 nomad_namespace :analytics do
   nomad_job :grafana
-  nomad_job :"node-exporter"
 end
 ```
 
