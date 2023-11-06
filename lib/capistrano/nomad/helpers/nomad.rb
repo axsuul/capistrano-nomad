@@ -116,7 +116,7 @@ end
 def capistrano_nomad_capture_nomad_command(*args)
   output = nil
 
-  on(roles(:manager)) do |host|
+  on(roles(:manager)) do |_host|
     output = capistrano_nomad_run_nomad_command(:capture, *args)
   end
 
@@ -125,7 +125,7 @@ end
 
 def capistrano_nomad_exec_within_job(name, command, namespace: nil, task: nil)
   on(roles(:manager)) do
-    task = name unless task
+    task ||= name
 
     # Find alloc id that contains task
     output = capistrano_nomad_capture_nomad_command(

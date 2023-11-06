@@ -53,6 +53,25 @@ namespace :nomad do
         capistrano_nomad_purge_jobs(names, namespace: namespace)
       end
     end
+
+    desc "Create missing and remove unused namespaces"
+    task :replace_namespaces do
+      output = capistrano_nomad_capture_nomad_command(:namespace, :list, t: "'{{range .}}{{ .Name }}|{{end}}'")
+      current_namespaces = output.split("|").compact.map(&:to_sym)
+      desired_namespaces = fetch(:nomad_jobs).keys
+      missing_namespaces = desired_namespaces - current_namespaces
+      unused_namespaces = current_namespaces - desired_namespaces
+
+      # Remove unused namespaces
+      unused_namespaces.each do |namespace|
+        capistrano_nomad_execute_nomad_command(:namespace, :delete, namespace)
+      end
+
+      # Create missing namespaces
+      missing_namespaces.each do |namespace|
+        capistrano_nomad_execute_nomad_command(:namespace, :apply, namespace)
+      end
+    end
   end
 
   namespace :docker_images do
