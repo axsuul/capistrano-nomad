@@ -123,25 +123,52 @@ def capistrano_nomad_capture_nomad_command(*args)
   output
 end
 
+def capistrano_nomad_find_job_task_details(name, namespace: nil, task: nil)
+  task = task.presence || name
+
+  # Find alloc id that contains task
+  allocs_output = capistrano_nomad_capture_nomad_command(
+    :job,
+    :allocs,
+    { namespace: namespace, t: "'{{range .}}{{ .ID }},{{ .TaskGroup }}|{{end}}'" },
+    name,
+  )
+  alloc_id = allocs_output.split("|").map { |s| s.split(",") }.find { |_, t| t == task.to_s }&.first
+
+  # Can't continue if we can't choose an alloc id
+  return unless alloc_id
+
+  tasks_output = capistrano_nomad_capture_nomad_command(
+    :alloc,
+    :status,
+    { namespace: namespace, t: "'{{range $key, $value := .TaskStates}}{{ $key }},{{ .State }}|{{end}}'" },
+    alloc_id,
+  )
+  tasks_by_score = tasks_output.split("|").each_with_object({}) do |task_output, hash|
+    task, state = task_output.split(",")
+
+    score = 0
+    score += 5 if state == "running"
+    score += 5 unless task.match?(/connect-proxy/)
+
+    hash[task] = score
+  end
+  task = tasks_by_score.max_by { |_, v| v }.first
+
+  {
+    alloc_id: alloc_id,
+    name: task,
+  }
+end
+
 def capistrano_nomad_exec_within_job(name, command, namespace: nil, task: nil)
   on(roles(:manager)) do
-    task ||= name
-
-    # Find alloc id that contains task
-    output = capistrano_nomad_capture_nomad_command(
-      :job,
-      :allocs,
-      { namespace: namespace, t: "'{{range .}}{{ .ID }},{{ .TaskGroup }}|{{end}}'" },
-      name,
-    )
-    alloc_id = output.split("|").map { |s| s.split(",") }.find { |_, t| t == task.to_s }&.first
-
-    if alloc_id
+    if (task_details = capistrano_nomad_find_job_task_details(name, namespace: namespace, task: task))
       capistrano_nomad_execute_nomad_command(
         :alloc,
         :exec,
-        { namespace: namespace, task: task },
-        alloc_id,
+        { namespace: namespace, task: task_details[:name] },
+        task_details[:alloc_id],
         command,
       )
     else
@@ -269,11 +296,11 @@ def capistrano_nomad_plan_jobs(names, *args)
   end
 end
 
-def capistrano_nomad_run_jobs(names, namespace: nil)
+def capistrano_nomad_run_jobs(names, namespace: nil, is_detached: true)
   names.each do |name|
     run_options = {
       namespace: namespace,
-      detach: true,
+      detach: is_detached,
 
       # Don't reset counts since they may have been scaled
       preserve_counts: true,
@@ -292,44 +319,52 @@ def capistrano_nomad_run_jobs(names, namespace: nil)
 end
 
 # Remove job and run again
-def capistrano_nomad_rerun_jobs(names)
+def capistrano_nomad_rerun_jobs(names, **options)
+  general_options = options.slice!(:is_detached)
+
   names.each do |name|
     # Wait for jobs to be purged before running again
-    capistrano_nomad_purge_jobs([name], is_detached: false)
+    capistrano_nomad_purge_jobs([name], **general_options.merge(is_detached: false))
 
-    capistrano_nomad_run_jobs([name])
+    capistrano_nomad_run_jobs([name], **general_options.merge(options))
   end
 end
 
-def capistrano_nomad_upload_plan_jobs(names, *args)
-  capistrano_nomad_upload_jobs(names, *args)
-  capistrano_nomad_plan_jobs(names, *args)
+def capistrano_nomad_upload_plan_jobs(names, **options)
+  capistrano_nomad_upload_jobs(names, **options)
+  capistrano_nomad_plan_jobs(names, **options)
 end
 
-def capistrano_nomad_upload_run_jobs(names, *args)
-  capistrano_nomad_upload_jobs(names, *args)
-  capistrano_nomad_run_jobs(names, *args)
+def capistrano_nomad_upload_run_jobs(names, **options)
+  general_options = options.slice!(:is_detached)
+
+  capistrano_nomad_upload_jobs(names, **general_options)
+  capistrano_nomad_run_jobs(names, **general_options.merge(options))
 end
 
-def capistrano_nomad_upload_rerun_jobs(names, *args)
-  capistrano_nomad_upload_jobs(names, *args)
-  capistrano_nomad_rerun_jobs(names, *args)
+def capistrano_nomad_upload_rerun_jobs(names, **options)
+  general_options = options.slice!(:is_detached)
+
+  capistrano_nomad_upload_jobs(names, **general_options)
+  capistrano_nomad_rerun_jobs(names, **general_options.merge(options))
 end
 
-def capistrano_nomad_deploy_jobs(names, *args)
-  capistrano_nomad_assemble_jobs_docker_images(names, *args)
-  capistrano_nomad_upload_run_jobs(names, *args)
+def capistrano_nomad_deploy_jobs(names, **options)
+  general_options = options.slice!(:is_detached)
+
+  capistrano_nomad_assemble_jobs_docker_images(names, **general_options)
+  capistrano_nomad_upload_run_jobs(names, **general_options.merge(options))
 end
 
-def capistrano_nomad_stop_jobs(names, namespace: nil)
+def capistrano_nomad_stop_jobs(names, **options)
   names.each do |name|
-    capistrano_nomad_execute_nomad_command(:job, :stop, { namespace: namespace }, name)
+    capistrano_nomad_execute_nomad_command(:job, :stop, options, name)
   end
 end
 
-def capistrano_nomad_restart_jobs(names, namespace: nil)
+def capistrano_nomad_restart_jobs(names, **options)
   names.each do |name|
-    capistrano_nomad_execute_nomad_command(:job, :restart, { namespace: namespace }, name)
+    capistrano_nomad_execute_nomad_command(:job, :restart, options, name)
   end
 end
 
@@ -339,6 +374,6 @@ def capistrano_nomad_purge_jobs(names, namespace: nil, is_detached: true)
   end
 end
 
-def capistrano_nomad_display_job_status(name, *args)
-  capistrano_nomad_execute_nomad_command(:status, *args, name)
+def capistrano_nomad_display_job_status(name, **options)
+  capistrano_nomad_execute_nomad_command(:status, options, name)
 end

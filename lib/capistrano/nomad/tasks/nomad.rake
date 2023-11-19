@@ -55,7 +55,7 @@ namespace :nomad do
     end
 
     desc "Create missing and remove unused namespaces"
-    task :replace_namespaces do
+    task :modify_namespaces do
       output = capistrano_nomad_capture_nomad_command(:namespace, :list, t: "'{{range .}}{{ .Name }}|{{end}}'")
       current_namespaces = output.split("|").compact.map(&:to_sym)
       desired_namespaces = fetch(:nomad_jobs).keys

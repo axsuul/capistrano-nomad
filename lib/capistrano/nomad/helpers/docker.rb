@@ -70,6 +70,9 @@ def capistrano_nomad_build_docker_image_for_type(image_type)
 
   return unless attributes
 
+  # No need to build if there's no path
+  return unless attributes[:path]
+
   args = [
     # Ensure images are built for x86_64 which is production env otherwise it will default to local development env
     # which can be arm64 (Apple Silicon)
@@ -106,26 +109,30 @@ def capistrano_nomad_build_docker_image_for_type(image_type)
 end
 
 def capistrano_nomad_push_docker_image_for_type(image_type, is_manifest_updated: true)
-  # Allows end user to add hooks
-  invoke("nomad:docker_images:push")
+  attributes = fetch(:nomad_docker_image_types)[image_type]
+  alias_digest = attributes&.dig(:alias_digest)
 
   run_locally do
-    interaction_handler = CapistranoNomadDockerPushImageInteractionHandler.new
-    image_alias = capistrano_nomad_build_docker_image_alias(image_type)
+    # Don't push Docker image if alias digest is already passed in
+    unless alias_digest
+      interaction_handler = CapistranoNomadDockerPushImageInteractionHandler.new
+      image_alias = capistrano_nomad_build_docker_image_alias(image_type)
 
-    # We should not proceed if image cannot be pushed
-    unless execute("docker push #{image_alias}", interaction_handler: interaction_handler)
-      raise StandardError, "Docker image push unsuccessful!"
+      # We should not proceed if image cannot be pushed
+      unless execute("docker push #{image_alias}", interaction_handler: interaction_handler)
+        raise StandardError, "Docker image push unsuccessful!"
+      end
+
+      return unless is_manifest_updated
+
+      # Has the @sha256:xxxx appended so we have the ability to also target by digest
+      alias_digest = "#{image_alias}@#{interaction_handler.last_digest}"
     end
-
-    return unless is_manifest_updated
 
     # Update image type manifest
     capistrano_nomad_update_docker_image_types_manifest(image_type,
       alias: image_alias,
-
-      # Has the @sha256:xxxx appended so we have the ability to also target by digest
-      alias_digest: "#{image_alias}@#{interaction_handler.last_digest}",
+      alias_digest: alias_digest,
     )
   end
 end

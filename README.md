@@ -55,10 +55,13 @@ nomad_docker_image_type :backend,
 nomad_docker_image_type :redis,
   path: "/absolute/path/redis",
   alias: "gcr.io/axsuul/redis"
+nomad_docker_image_type :postgres,
+  alias_digest: "postgres:5.0.0"
 
 # Jobs
-nomad_job :frontend
 nomad_job :backend, docker_image_types: [:backend], var_files: [:rails]
+nomad_job :frontend
+nomad_job :postgres, docker_image_types: [:postgres]
 nomad_job :redis, docker_image_types: [:redis]
 nomad_job :"traefik-default", template: :traefik, erb_vars: { role: :default }
 nomad_job :"traefik-secondary", template: :traefik, erb_vars: { role: :secondary }
@@ -74,12 +77,20 @@ Deploy all with
 cap production nomad:all:deploy
 ```
 
-Deploy individually with
+Deploy jobs individually with
 
 ```shell
 cap production nomad:app:deploy
-cap production nomad:redis:purge
 cap production nomad:analytics:grafana:deploy
+```
+
+Manage jobs with
+
+```shell
+cap production nomad:app:stop
+cap production nomad:redis:purge
+cap production nomad:analytics:grafana:restart
+cap production nomad:postgres:status
 ```
 
 Open console with
@@ -93,7 +104,7 @@ cap production nomad:analytics:grafana:console
 Create missing and delete unused namespaces
 
 ```shell
-cap production nomad:all:replace_namespaces
+cap production nomad:all:modify_namespaces
 ```
 
 ## Development

@@ -50,12 +50,12 @@ def nomad_job(name, attributes = {})
 
       desc "Run #{description_name} job"
       task :run do
-        capistrano_nomad_run_jobs([name], namespace: namespace)
+        capistrano_nomad_run_jobs([name], namespace: namespace, is_detached: false)
       end
 
       desc "Purge and run #{description_name} job again"
       task :rerun do
-        capistrano_nomad_rerun_jobs([name], namespace: namespace)
+        capistrano_nomad_rerun_jobs([name], namespace: namespace, is_detached: false)
       end
 
       desc "Upload and plan #{description_name} job"
@@ -65,27 +65,27 @@ def nomad_job(name, attributes = {})
 
       desc "Upload and run #{description_name} job"
       task :upload_run do
-        capistrano_nomad_upload_run_jobs([name], namespace: namespace)
+        capistrano_nomad_upload_run_jobs([name], namespace: namespace, is_detached: false)
       end
 
       desc "Upload and re-run #{description_name} job"
       task :upload_rerun do
-        capistrano_nomad_upload_rerun_jobs([name], namespace: namespace)
+        capistrano_nomad_upload_rerun_jobs([name], namespace: namespace, is_detached: false)
       end
 
       desc "Deploy #{description_name} job"
       task :deploy do
-        capistrano_nomad_deploy_jobs([name], namespace: namespace)
-      end
-
-      desc "Restart #{description_name} job"
-      task :restart do
-        capistrano_nomad_restart_jobs([name], namespace: namespace)
+        capistrano_nomad_deploy_jobs([name], namespace: namespace, is_detached: false)
       end
 
       desc "Stop #{description_name} job"
       task :stop do
         capistrano_nomad_stop_jobs([name], namespace: namespace)
+      end
+
+      desc "Restart #{description_name} job"
+      task :restart do
+        capistrano_nomad_restart_jobs([name], namespace: namespace)
       end
 
       desc "Purge #{description_name} job"
@@ -98,9 +98,36 @@ def nomad_job(name, attributes = {})
         capistrano_nomad_display_job_status(name, namespace: namespace)
       end
 
-      desc "Open console to #{description_name} job. Specify task by passing TASK environment variable"
+      desc "Open console to #{description_name} job. Specify task with TASK, command with CMD"
       task :console do
-        capistrano_nomad_exec_within_job(name, "/bin/bash", namespace: namespace, task: ENV["TASK"].presence)
+        command = ENV["CMD"].presence || "/bin/bash"
+
+        capistrano_nomad_exec_within_job(name, command, namespace: namespace, task: ENV["TASK"])
+      end
+
+      desc "Display stdout of #{description_name} job"
+      task :stdout do
+        capistrano_nomad_execute_nomad_command(
+          :alloc,
+          :logs,
+          { namespace: namespace, job: true, tail: true, n: 50, stdout: true },
+          name,
+        )
+      end
+
+      desc "Display stderr of #{description_name} job"
+      task :stderr do
+        capistrano_nomad_execute_nomad_command(
+          :alloc,
+          :logs,
+          { namespace: namespace, job: true, tail: true, n: 50, stderr: true },
+          name,
+        )
+      end
+
+      desc "Tail logs of #{description_name} job"
+      task :tail do
+        capistrano_nomad_execute_nomad_command(:alloc, :logs, { namespace: namespace, job: true, f: true }, name)
       end
     end
   end
