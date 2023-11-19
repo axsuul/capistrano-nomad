@@ -10,16 +10,6 @@ class CapistranoNomadErbNamespace
     end
   end
 
-  # Use default value passed in unless `nomad_job_task_cpu_resource` is set
-  def build_nomad_job_task_cpu_resource(default:)
-    nomad_job_task_cpu_resource == "null" ? default : nomad_job_task_cpu_resource
-  end
-
-  # Use default value passed in unless `nomad_job_task_memory_resource` is set
-  def build_nomad_job_task_memory_resource(default:)
-    nomad_job_task_memory_resource == "null" ? default : nomad_job_task_memory_resource
-  end
-
   # rubocop:disable Style/MissingRespondToMissing
   def method_missing(name, *args)
     instance_variable = "@#{name}"
@@ -202,7 +192,7 @@ def capistrano_nomad_upload_file(local_path:, remote_path:, erb_vars: {})
   }
 
   # Add global ERB vars
-  final_erb_vars.merge!(fetch(:nomad_erb_vars) || {})
+  final_erb_vars.merge!(fetch(:nomad_template_vars) || {})
 
   # Add job-specific ERB vars
   final_erb_vars.merge!(erb_vars)
@@ -395,4 +385,8 @@ def capistrano_nomad_display_job_logs(name, namespace: nil, **options)
       name,
     )
   end
+end
+
+def capistrano_nomad_tail_job_logs(*args, **options)
+  capistrano_nomad_display_job_logs(*args, **options.merge(tail: true, n: 50))
 end

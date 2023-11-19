@@ -37,14 +37,23 @@ Within `deploy.rb`
 set :nomad_jobs_path, "nomad/jobs"
 set :nomad_var_files_path, "nomad/vars"
 
-# Accessible in all .erb files
-set :nomad_erb_vars, (lambda do
+# Make variables available to all template .erb files
+set :nomad_template_vars, (lambda do
   {
     env_name: fetch(:stage).to_sym,
     domain: fetch(:domain),
     foo: "bar,"
   }
 end)
+
+# Make helpers available to all template .erb files
+nomad_template_helpers do
+  def restart_stanza
+    <<-EOF
+
+    EOF
+  end
+end
 
 # Docker image types
 nomad_docker_image_type :backend,
@@ -104,9 +113,10 @@ cap production nomad:analytics:grafana:console
 Show logs with
 
 ```shell
+cap production nomad:app:logs
 cap production nomad:app:stdout
 cap production nomad:app:stderr
-cap production nomad:analytics:grafana:tail
+cap production nomad:analytics:grafana:follow
 ```
 
 Create missing and delete unused namespaces

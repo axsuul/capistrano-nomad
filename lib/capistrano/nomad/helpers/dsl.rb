@@ -105,18 +105,24 @@ def nomad_job(name, attributes = {})
         capistrano_nomad_exec_within_job(name, command, namespace: namespace, task: ENV["TASK"])
       end
 
+      desc "Display stdout and stderr of #{description_name} job. Specify task with TASK"
+      task :logs do
+        capistrano_nomad_tail_job_logs(name, namespace: namespace, stdout: true)
+        capistrano_nomad_tail_job_logs(name, namespace: namespace, stderr: true)
+      end
+
       desc "Display stdout of #{description_name} job. Specify task with TASK"
       task :stdout do
-        capistrano_nomad_display_job_logs(name, namespace: namespace, tail: true, n: 50, stdout: true)
+        capistrano_nomad_tail_job_logs(name, namespace: namespace, stdout: true)
       end
 
       desc "Display stderr of #{description_name} job. Specify task with TASK"
       task :stderr do
-        capistrano_nomad_display_job_logs(name, namespace: namespace, tail: true, n: 50, stderr: true)
+        capistrano_nomad_tail_job_logs(name, namespace: namespace, stderr: true)
       end
 
-      desc "Tail logs of #{description_name} job. Specify task with TASK"
-      task :tail do
+      desc "Follow logs of #{description_name} job. Specify task with TASK"
+      task :follow do
         capistrano_nomad_display_job_logs(name, namespace: namespace, f: true)
       end
     end
@@ -132,4 +138,8 @@ def nomad_job(name, attributes = {})
       define_tasks.call
     end
   end
+end
+
+def nomad_template_helpers(&block)
+  CapistranoNomadErbNamespace.class_eval(&block)
 end
