@@ -379,7 +379,7 @@ def capistrano_nomad_display_job_status(name, **options)
 end
 
 def capistrano_nomad_display_job_logs(name, namespace: nil, **options)
-  if (task_details = capistrano_nomad_find_job_task_details(name, namespace: namespace))
+  if (task_details = capistrano_nomad_find_job_task_details(name, namespace: namespace, task: ENV["TASK"]))
     capistrano_nomad_execute_nomad_command(
       :alloc,
       :logs,

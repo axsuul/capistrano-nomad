@@ -105,17 +105,17 @@ def nomad_job(name, attributes = {})
         capistrano_nomad_exec_within_job(name, command, namespace: namespace, task: ENV["TASK"])
       end
 
-      desc "Display stdout of #{description_name} job"
+      desc "Display stdout of #{description_name} job. Specify task with TASK"
       task :stdout do
         capistrano_nomad_display_job_logs(name, namespace: namespace, tail: true, n: 50, stdout: true)
       end
 
-      desc "Display stderr of #{description_name} job"
+      desc "Display stderr of #{description_name} job. Specify task with TASK"
       task :stderr do
         capistrano_nomad_display_job_logs(name, namespace: namespace, tail: true, n: 50, stderr: true)
       end
 
-      desc "Tail logs of #{description_name} job"
+      desc "Tail logs of #{description_name} job. Specify task with TASK"
       task :tail do
         capistrano_nomad_display_job_logs(name, namespace: namespace, f: true)
       end
