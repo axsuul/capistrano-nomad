@@ -48,9 +48,13 @@ end)
 
 # Make helpers available to all template .erb files
 nomad_template_helpers do
-  def restart_stanza
+  def restart_stanza(interval = "1m")
     <<-EOF
-
+      restart {
+        interval = "#{interval}"
+        attempts = 3
+        mode = "delay"
+      }
     EOF
   end
 end
@@ -80,20 +84,20 @@ nomad_namespace :analytics do
 end
 ```
 
-Deploy all with
+Deploy all jobs
 
 ```shell
 cap production nomad:all:deploy
 ```
 
-Deploy jobs individually with
+Deploy individual jobs
 
 ```shell
 cap production nomad:app:deploy
 cap production nomad:analytics:grafana:deploy
 ```
 
-Manage jobs with
+Manage jobs
 
 ```shell
 cap production nomad:app:stop
@@ -102,7 +106,7 @@ cap production nomad:analytics:grafana:restart
 cap production nomad:postgres:status
 ```
 
-Open console with
+Open console
 
 ```shell
 cap production nomad:app:console
@@ -110,7 +114,7 @@ cap production nomad:app:console TASK=custom-task-name
 cap production nomad:analytics:grafana:console
 ```
 
-Show logs with
+Display logs
 
 ```shell
 cap production nomad:app:logs
