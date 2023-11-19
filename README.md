@@ -101,6 +101,14 @@ cap production nomad:app:console TASK=custom-task-name
 cap production nomad:analytics:grafana:console
 ```
 
+Show logs with
+
+```shell
+cap production nomad:app:stdout
+cap production nomad:app:stderr
+cap production nomad:analytics:grafana:tail
+```
+
 Create missing and delete unused namespaces
 
 ```shell

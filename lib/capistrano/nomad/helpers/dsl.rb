@@ -107,27 +107,17 @@ def nomad_job(name, attributes = {})
 
       desc "Display stdout of #{description_name} job"
       task :stdout do
-        capistrano_nomad_execute_nomad_command(
-          :alloc,
-          :logs,
-          { namespace: namespace, job: true, tail: true, n: 50, stdout: true },
-          name,
-        )
+        capistrano_nomad_display_job_logs(name, namespace: namespace, tail: true, n: 50, stdout: true)
       end
 
       desc "Display stderr of #{description_name} job"
       task :stderr do
-        capistrano_nomad_execute_nomad_command(
-          :alloc,
-          :logs,
-          { namespace: namespace, job: true, tail: true, n: 50, stderr: true },
-          name,
-        )
+        capistrano_nomad_display_job_logs(name, namespace: namespace, tail: true, n: 50, stderr: true)
       end
 
       desc "Tail logs of #{description_name} job"
       task :tail do
-        capistrano_nomad_execute_nomad_command(:alloc, :logs, { namespace: namespace, job: true, f: true }, name)
+        capistrano_nomad_display_job_logs(name, namespace: namespace, f: true)
       end
     end
   end

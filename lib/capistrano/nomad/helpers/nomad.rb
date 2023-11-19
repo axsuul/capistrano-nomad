@@ -377,3 +377,22 @@ end
 def capistrano_nomad_display_job_status(name, **options)
   capistrano_nomad_execute_nomad_command(:status, options, name)
 end
+
+def capistrano_nomad_display_job_logs(name, namespace: nil, **options)
+  if (task_details = capistrano_nomad_find_job_task_details(name, namespace: namespace))
+    capistrano_nomad_execute_nomad_command(
+      :alloc,
+      :logs,
+      options.merge(namespace: namespace, task: task_details[:name]),
+      task_details[:alloc_id],
+    )
+  else
+    # If task can't be determined choose a random allocation
+    capistrano_nomad_execute_nomad_command(
+      :alloc,
+      :logs,
+      options.merge(namespace: namespace, job: true),
+      name,
+    )
+  end
+end
