@@ -59,17 +59,27 @@ nomad_template_helpers do
   end
 end
 
-# Docker image types
+# Use hosted Docker image
+nomad_docker_image_type :postgres,
+  alias_digest: "postgres:5.0.0"
+
+# Use Docker image that will be built locally relative to project and push
 nomad_docker_image_type :backend,
   path: "local/path/backend",
   alias: ->(image_type:) { "gcr.io/axsuul/#{image_type}" },
   target: "release",
   build_args: { foo: "bar" }
+
+# Use Docker image that will be built locally from an absolute path and push
 nomad_docker_image_type :redis,
   path: "/absolute/path/redis",
   alias: "gcr.io/axsuul/redis"
-nomad_docker_image_type :postgres,
-  alias_digest: "postgres:5.0.0"
+
+# Use Docker image that will be built remotely on server
+nomad_docker_image_type :restic,
+  path: "containers/restic",
+  alias: "my-project/restic:local",
+  strategy: :remote_build
 
 # Jobs
 nomad_job :backend, docker_image_types: [:backend], var_files: [:rails]

@@ -96,7 +96,7 @@ def capistrano_nomad_run_nomad_command(kind, *args)
 end
 
 def capistrano_nomad_execute_nomad_command(*args)
-  on(roles(:manager)) do |host|
+  capistrano_nomad_run_remotely do |host|
     run_interactively(host) do
       capistrano_nomad_run_nomad_command(:execute, *args)
     end
@@ -106,7 +106,7 @@ end
 def capistrano_nomad_capture_nomad_command(*args)
   output = nil
 
-  on(roles(:manager)) do |_host|
+  capistrano_nomad_run_remotely do
     output = capistrano_nomad_run_nomad_command(:capture, *args)
   end
 
@@ -152,7 +152,7 @@ def capistrano_nomad_find_job_task_details(name, namespace: nil, task: nil)
 end
 
 def capistrano_nomad_exec_within_job(name, command, namespace: nil, task: nil)
-  on(roles(:manager)) do
+  capistrano_nomad_run_remotely do
     if (task_details = capistrano_nomad_find_job_task_details(name, namespace: namespace, task: task))
       capistrano_nomad_execute_nomad_command(
         :alloc,
@@ -174,40 +174,55 @@ def capistrano_nomad_exec_within_job(name, command, namespace: nil, task: nil)
   end
 end
 
-def capistrano_nomad_upload_file(local_path:, remote_path:, erb_vars: {})
-  docker_image_types = fetch(:nomad_docker_image_types)
-  docker_image_types_manifest = capistrano_nomad_read_docker_image_types_manifest
+def capistrano_nomad_upload(local_path:, remote_path:, erb_vars: {})
+  # If directory upload everything within the directory
+  if File.directory?(local_path)
+    Dir.glob("#{local_path}/*").each do |path|
+      capistrano_nomad_upload(local_path: path, remote_path: "#{remote_path}/#{File.basename(path)}")
+    end
+  else
+    io =
+      if File.extname(local_path) == ".erb"
+        docker_image_types = fetch(:nomad_docker_image_types)
+        docker_image_types_manifest = capistrano_nomad_read_docker_image_types_manifest
 
-  # Merge manifest into image types
-  docker_image_types_manifest.each do |manifest_image_type, manifest_attributes|
-    docker_image_types[manifest_image_type]&.merge!(manifest_attributes) || {}
-  end
+        # Merge manifest into image types
+        docker_image_types_manifest.each do |manifest_image_type, manifest_attributes|
+          docker_image_types[manifest_image_type]&.merge!(manifest_attributes) || {}
+        end
 
-  # Parse manifest files using ERB
-  erb = ERB.new(File.open(local_path).read, trim_mode: "-")
+        # Parse manifest files using ERB
+        erb = ERB.new(File.open(local_path).read, trim_mode: "-")
 
-  final_erb_vars = {
-    git_commit_id: fetch(:current_revision) || capistrano_nomad_git_commit_id,
-    docker_image_types: docker_image_types,
-  }
+        final_erb_vars = {
+          git_commit_id: fetch(:current_revision) || capistrano_nomad_git_commit_id,
+          docker_image_types: docker_image_types,
+        }
 
-  # Add global ERB vars
-  final_erb_vars.merge!(fetch(:nomad_template_vars) || {})
+        # Add global ERB vars
+        final_erb_vars.merge!(fetch(:nomad_template_vars) || {})
 
-  # Add job-specific ERB vars
-  final_erb_vars.merge!(erb_vars)
+        # Add job-specific ERB vars
+        final_erb_vars.merge!(erb_vars)
 
-  # We use a custom namespace class so that we can include helper methods into the namespace to make them available for
-  # template to access
-  namespace = CapistranoNomadErbNamespace.new(
-    context: self,
-    vars: final_erb_vars,
-  )
-  erb_io = StringIO.new(erb.result(namespace.instance_eval { binding }))
+        # We use a custom namespace class so that we can include helper methods into the namespace to make them available
+        # for template to access
+        namespace = CapistranoNomadErbNamespace.new(
+          context: self,
+          vars: final_erb_vars,
+        )
 
-  on(roles(:manager)) do
-    execute(:mkdir, "-p", File.dirname(remote_path))
-    upload!(erb_io, remote_path)
+        StringIO.new(erb.result(namespace.instance_eval { binding }))
+      else
+        File.open(local_path)
+      end
+
+    capistrano_nomad_run_remotely do
+      # Ensure parent directory exists
+      execute(:mkdir, "-p", File.dirname(remote_path))
+
+      upload!(io, remote_path)
+    end
   end
 end
 
@@ -253,7 +268,7 @@ def capistrano_nomad_upload_jobs(names, *args)
   uniq_var_files = names.map { |n| capistrano_nomad_fetch_job_var_files(n, *args) }.flatten.uniq
 
   uniq_var_files.each do |var_file|
-    capistrano_nomad_upload_file(
+    capistrano_nomad_upload(
       local_path: capistrano_nomad_build_local_var_file_path(var_file, *args),
       remote_path: capistrano_nomad_build_release_var_file_path(var_file, *args),
     )
@@ -269,7 +284,7 @@ def capistrano_nomad_upload_jobs(names, *args)
       # Can set a custom template instead
       file_basename = nomad_job_options[:template] || name
 
-      capistrano_nomad_upload_file(
+      capistrano_nomad_upload(
         local_path: capistrano_nomad_build_local_job_path(file_basename, *args),
         remote_path: capistrano_nomad_build_release_job_path(name, *args),
         erb_vars: erb_vars,

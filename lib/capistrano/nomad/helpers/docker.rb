@@ -21,7 +21,7 @@ end
 def capistrano_nomad_read_docker_image_types_manifest
   manifest = {}
 
-  on(roles(:manager)) do |_host|
+  capistrano_nomad_run_remotely do
     # Ensure file exists
     execute("mkdir -p #{shared_path}")
     execute("touch #{capistrano_nomad_docker_image_types_manifest_path}")
@@ -37,7 +37,7 @@ def capistrano_nomad_read_docker_image_types_manifest
 end
 
 def capistrano_nomad_update_docker_image_types_manifest(image_type, properties = {})
-  on(roles(:manager)) do |_host|
+  capistrano_nomad_run_remotely do
     # Read and update manifest
     manifest = capistrano_nomad_read_docker_image_types_manifest
     manifest[image_type] = (manifest[image_type] || {}).merge(properties.stringify_keys)
@@ -90,12 +90,7 @@ def capistrano_nomad_build_docker_image_for_type(image_type)
     args << "--build-arg #{key}=#{value}"
   end
 
-  run_locally do
-    # If any of these files exist then we're in the middle of rebase so we should interrupt
-    if ["rebase-merge", "rebase-apply"].any? { |f| File.exist?("#{capistrano_nomad_git.dir.path}/.git/#{f}") }
-      raise StandardError, "Still in the middle of git rebase, interrupting docker image build"
-    end
-
+  docker_build_command = lambda do |path|
     image_alias_args = args.dup
 
     [capistrano_nomad_build_docker_image_alias(image_type)]
@@ -104,13 +99,38 @@ def capistrano_nomad_build_docker_image_for_type(image_type)
         image_alias_args << "--tag #{tag}"
       end
 
-    execute("docker build #{image_alias_args.join(' ')} #{capistrano_nomad_root.join(attributes[:path])}")
+    "docker build #{image_alias_args.join(' ')} #{path}"
+  end
+
+  case attributes[:strategy]
+
+  # We need to build Docker container locally
+  when :local_build, :local_push
+    run_locally do
+      # If any of these files exist then we're in the middle of rebase so we should interrupt
+      if ["rebase-merge", "rebase-apply"].any? { |f| File.exist?("#{capistrano_nomad_git.dir.path}/.git/#{f}") }
+        raise StandardError, "Still in the middle of git rebase, interrupting docker image build"
+      end
+
+      execute(docker_build_command.call(capistrano_nomad_root.join(attributes[:path])))
+    end
+
+  # We need to build Docker container remotely
+  when :remote_build, :remote_push
+    remote_path = Pathname.new(release_path).join(attributes[:path])
+    capistrano_nomad_upload(local_path: attributes[:path], remote_path: remote_path)
+
+    capistrano_nomad_run_remotely do
+      execute(docker_build_command.call(remote_path))
+    end
   end
 end
 
 def capistrano_nomad_push_docker_image_for_type(image_type, is_manifest_updated: true)
   attributes = fetch(:nomad_docker_image_types)[image_type]
   alias_digest = attributes&.dig(:alias_digest)
+
+  return false unless [:local_push, :remote_push].include?(attributes[:strategy])
 
   run_locally do
     # Don't push Docker image if alias digest is already passed in
