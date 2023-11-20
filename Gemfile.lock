@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    capistrano-nomad (0.6.5)
+    capistrano-nomad (0.7.0)
       activesupport (<= 7.0.8)
       byebug
       capistrano (~> 3.0)
