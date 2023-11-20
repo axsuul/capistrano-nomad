@@ -180,48 +180,45 @@ def capistrano_nomad_upload(local_path:, remote_path:, erb_vars: {})
     Dir.glob("#{local_path}/*").each do |path|
       capistrano_nomad_upload(local_path: path, remote_path: "#{remote_path}/#{File.basename(path)}")
     end
+
+  # If file, attempt to always parse it as ERB
   else
-    io =
-      if File.extname(local_path) == ".erb"
-        docker_image_types = fetch(:nomad_docker_image_types)
-        docker_image_types_manifest = capistrano_nomad_read_docker_image_types_manifest
+    docker_image_types = fetch(:nomad_docker_image_types)
+    docker_image_types_manifest = capistrano_nomad_read_docker_image_types_manifest
 
-        # Merge manifest into image types
-        docker_image_types_manifest.each do |manifest_image_type, manifest_attributes|
-          docker_image_types[manifest_image_type]&.merge!(manifest_attributes) || {}
-        end
+    # Merge manifest into image types
+    docker_image_types_manifest.each do |manifest_image_type, manifest_attributes|
+      docker_image_types[manifest_image_type]&.merge!(manifest_attributes) || {}
+    end
 
-        # Parse manifest files using ERB
-        erb = ERB.new(File.open(local_path).read, trim_mode: "-")
+    # Parse manifest files using ERB
+    erb = ERB.new(File.open(local_path).read, trim_mode: "-")
 
-        final_erb_vars = {
-          git_commit_id: fetch(:current_revision) || capistrano_nomad_git_commit_id,
-          docker_image_types: docker_image_types,
-        }
+    final_erb_vars = {
+      git_commit_id: fetch(:current_revision) || capistrano_nomad_git_commit_id,
+      docker_image_types: docker_image_types,
+    }
 
-        # Add global ERB vars
-        final_erb_vars.merge!(fetch(:nomad_template_vars) || {})
+    # Add global ERB vars
+    final_erb_vars.merge!(fetch(:nomad_template_vars) || {})
 
-        # Add job-specific ERB vars
-        final_erb_vars.merge!(erb_vars)
+    # Add job-specific ERB vars
+    final_erb_vars.merge!(erb_vars)
 
-        # We use a custom namespace class so that we can include helper methods into the namespace to make them available
-        # for template to access
-        namespace = CapistranoNomadErbNamespace.new(
-          context: self,
-          vars: final_erb_vars,
-        )
+    # We use a custom namespace class so that we can include helper methods into the namespace to make them available
+    # for template to access
+    namespace = CapistranoNomadErbNamespace.new(
+      context: self,
+      vars: final_erb_vars,
+    )
 
-        StringIO.new(erb.result(namespace.instance_eval { binding }))
-      else
-        File.open(local_path)
-      end
+    string_io = StringIO.new(erb.result(namespace.instance_eval { binding }))
 
     capistrano_nomad_run_remotely do
       # Ensure parent directory exists
       execute(:mkdir, "-p", File.dirname(remote_path))
 
-      upload!(io, remote_path)
+      upload!(string_io, remote_path)
     end
   end
 end

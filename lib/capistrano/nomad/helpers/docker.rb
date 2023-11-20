@@ -133,8 +133,8 @@ def capistrano_nomad_push_docker_image_for_type(image_type, is_manifest_updated:
   return false unless [:local_push, :remote_push].include?(attributes[:strategy])
 
   run_locally do
-    # Don't push Docker image if alias digest is already passed in
-    unless alias_digest
+    # Only push Docker image if it was built from path
+    if attributes[:path]
       interaction_handler = CapistranoNomadDockerPushImageInteractionHandler.new
       image_alias = capistrano_nomad_build_docker_image_alias(image_type)
 

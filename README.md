@@ -61,7 +61,7 @@ end
 
 # Use hosted Docker image
 nomad_docker_image_type :postgres,
-  alias_digest: "postgres:5.0.0"
+  alias: "postgres:5.0.0"
 
 # Use Docker image that will be built locally relative to project and push
 nomad_docker_image_type :backend,

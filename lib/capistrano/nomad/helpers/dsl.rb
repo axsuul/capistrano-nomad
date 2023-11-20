@@ -3,12 +3,14 @@ require "active_support/core_ext/hash"
 def nomad_docker_image_type(image_type, attributes = {})
   docker_image_types = fetch(:nomad_docker_image_types) || {}
   docker_image_types[image_type] = attributes.reverse_merge(
-    # In case image doesn't get pushed, this will still be populated
-    alias_digest: attributes[:alias],
-
     # By default build and push Docker image locally
     strategy: :local_push,
   )
+
+  raise ArgumentError, "passing in alias_digest is not allowed!" if attributes[:alias_digest]
+
+  # If Docker image doesn't get pushed, this will still be populated
+  docker_image_types[image_type][:alias_digest] = attributes[:alias]
 
   set(:nomad_docker_image_types, docker_image_types)
 end
