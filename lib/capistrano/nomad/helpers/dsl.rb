@@ -15,7 +15,12 @@ def nomad_docker_image_type(image_type, attributes = {})
   set(:nomad_docker_image_types, docker_image_types)
 end
 
-def nomad_namespace(namespace, &block)
+def nomad_namespace(namespace, **options, &block)
+  nomad_namespaces = fetch(:nomad_namespaces) || {}
+  nomad_namespaces[namespace] = options
+  set(:nomad_namespaces, nomad_namespaces)
+
+  # Make namespace active for block
   @nomad_namespace = namespace
 
   instance_eval(&block)

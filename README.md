@@ -92,6 +92,10 @@ nomad_job :"traefik-secondary", template: :traefik, erb_vars: { role: :secondary
 nomad_namespace :analytics do
   nomad_job :grafana
 end
+
+nomad_namespace :maintenance, path: "maintenance-stuff" do
+  nomad_job :garbage_collection
+end
 ```
 
 Deploy all jobs
