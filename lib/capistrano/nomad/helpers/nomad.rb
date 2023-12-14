@@ -29,9 +29,24 @@ def capistrano_nomad_ensure_absolute_path(path)
   path[0] == "/" ? path : "/#{path}"
 end
 
-def capistrano_nomad_build_file_path(parent_path, basename, namespace: nil)
+def capistrano_nomad_build_file_path(parent_path, basename, kind: nil, namespace: nil)
   segments = [parent_path]
-  segments << namespace if namespace
+
+  if namespace
+    case kind
+
+    # Always upload to namespace folder on remote
+    when :release
+      segments << namespace
+
+    # Otherwise path can be overriden of where files belonging to namespace are stored locally
+    else
+      namespace_options = capistrano_nomad_fetch_namespace_options(namespace)
+
+      segments << (namespace_options[:path] || namespace)
+    end
+  end
+
   segments << "#{basename}.hcl"
 
   segments.join("/")
@@ -64,12 +79,16 @@ def capistrano_nomad_build_local_var_file_path(name, *args)
   capistrano_nomad_build_local_path(capistrano_nomad_build_base_var_file_path(name, *args))
 end
 
-def capistrano_nomad_build_release_job_path(*args)
-  "#{release_path}#{capistrano_nomad_ensure_absolute_path(capistrano_nomad_build_base_job_path(*args))}"
+def capistrano_nomad_build_release_job_path(name, **options)
+  options[:kind] = :release
+
+  "#{release_path}#{capistrano_nomad_ensure_absolute_path(capistrano_nomad_build_base_job_path(name, **options))}"
 end
 
-def capistrano_nomad_build_release_var_file_path(*args)
-  "#{release_path}#{capistrano_nomad_ensure_absolute_path(capistrano_nomad_build_base_var_file_path(*args))}"
+def capistrano_nomad_build_release_var_file_path(name, **options)
+  options[:kind] = :release
+
+  "#{release_path}#{capistrano_nomad_ensure_absolute_path(capistrano_nomad_build_base_var_file_path(name, **options))}"
 end
 
 def capistrano_nomad_run_nomad_command(kind, *args)
@@ -221,6 +240,10 @@ def capistrano_nomad_upload(local_path:, remote_path:, erb_vars: {})
       upload!(string_io, remote_path)
     end
   end
+end
+
+def capistrano_nomad_fetch_namespace_options(namespace)
+  fetch(:nomad_namespaces).dig(namespace)
 end
 
 def capistrano_nomad_fetch_job_options(name, *args, namespace: nil)

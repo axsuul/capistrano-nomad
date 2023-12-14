@@ -23,8 +23,8 @@ def capistrano_nomad_read_docker_image_types_manifest
 
   capistrano_nomad_run_remotely do
     # Ensure file exists
-    execute("mkdir -p #{shared_path}")
-    execute("touch #{capistrano_nomad_docker_image_types_manifest_path}")
+    execute("mkdir", "-p", shared_path)
+    execute("touch", capistrano_nomad_docker_image_types_manifest_path)
 
     output = capture("cat #{capistrano_nomad_docker_image_types_manifest_path}")
 
