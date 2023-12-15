@@ -11,6 +11,7 @@ module Capistrano
     def set_defaults
       set_if_empty(:nomad_jobs_path, "nomad/jobs")
       set_if_empty(:nomad_var_files_path, "nomad/var_files")
+      set_if_empty(:nomad_ui_url, "http://localhost:4646")
       set_if_empty(:nomad_docker_image_alias, ->(**) {})
     end
 

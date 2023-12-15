@@ -425,3 +425,13 @@ end
 def capistrano_nomad_tail_job_logs(*args, **options)
   capistrano_nomad_display_job_logs(*args, **options.merge(tail: true, n: 50))
 end
+
+def capistrano_nomad_open_job_ui(name, namespace: nil)
+  run_locally do
+    url = "#{fetch(:nomad_ui_url)}/ui/jobs/#{name}"
+    url += "@#{namespace}" if namespace
+
+    # Only macOS supported for now
+    execute(:open, url)
+  end
+end

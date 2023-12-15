@@ -140,6 +140,11 @@ def nomad_job(name, attributes = {})
       task :follow do
         capistrano_nomad_display_job_logs(name, namespace: namespace, f: true)
       end
+
+      desc "Open job in web UI"
+      task :ui do
+        capistrano_nomad_open_job_ui(name, namespace: namespace)
+      end
     end
   end
 

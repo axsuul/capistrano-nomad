@@ -37,6 +37,9 @@ Within `deploy.rb`
 set :nomad_jobs_path, "nomad/jobs"
 set :nomad_var_files_path, "nomad/vars"
 
+# Determines base URL to use when opening job in web UI 
+set :nomad_ui_url, "http://localhost:4646"
+
 # Make variables available to all template .erb files
 set :nomad_template_vars, (lambda do
   {
@@ -135,6 +138,12 @@ cap production nomad:app:logs
 cap production nomad:app:stdout
 cap production nomad:app:stderr
 cap production nomad:analytics:grafana:follow
+```
+
+Open job in web UI
+
+```shell
+cap production nomad:app:ui
 ```
 
 Create missing and delete unused namespaces
