@@ -101,12 +101,6 @@ nomad_namespace :maintenance, path: "maintenance-stuff" do
 end
 ```
 
-Deploy all jobs
-
-```shell
-cap production nomad:all:deploy
-```
-
 Deploy individual jobs
 
 ```shell
@@ -121,6 +115,15 @@ cap production nomad:app:stop
 cap production nomad:redis:purge
 cap production nomad:analytics:grafana:restart
 cap production nomad:postgres:status
+```
+
+Most tasks are also available for namespace or all
+
+```shell
+cap production nomad:analytics:deploy
+cap production nomad:analytics:upload_run
+cap production nomad:all:deploy
+cap production nomad:all:upload_run
 ```
 
 Open console

@@ -27,6 +27,11 @@ def nomad_namespace(namespace, **options, &block)
 
   @nomad_namespace = nil
 
+  # Define tasks for namespace jobs
+  namespace(:nomad) do
+    capistrano_nomad_define_group_tasks(namespace: namespace)
+  end
+
   true
 end
 
