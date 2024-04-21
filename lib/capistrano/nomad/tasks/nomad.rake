@@ -12,7 +12,10 @@ namespace :nomad do
     task :modify_namespaces do
       output = capistrano_nomad_capture_nomad_command(:namespace, :list, t: "'{{range .}}{{ .Name }}|{{end}}'")
       current_namespaces = output.split("|").compact.map(&:to_sym)
-      desired_namespaces = fetch(:nomad_jobs).keys
+
+      # If key is nil then it actually belongs to the default namespace
+      desired_namespaces = fetch(:nomad_jobs).keys.map { |n| n.nil? ? :default : n.to_sym }
+
       missing_namespaces = desired_namespaces - current_namespaces
       unused_namespaces = current_namespaces - desired_namespaces
 
