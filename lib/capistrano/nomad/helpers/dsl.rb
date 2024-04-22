@@ -120,7 +120,7 @@ def nomad_job(name, attributes = {})
 
       desc "Open console to #{description_name} job. Specify task with TASK, command with CMD"
       task :console do
-        command = ENV["CMD"].presence || "/bin/bash"
+        command = ENV["CMD"].presence || "/bin/sh"
 
         capistrano_nomad_exec_within_job(name, command, namespace: namespace, task: ENV["TASK"])
       end
