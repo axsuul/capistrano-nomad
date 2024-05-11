@@ -49,6 +49,19 @@ set :nomad_template_vars, (lambda do
   }
 end)
 
+# Change docker build command
+set :nomad_docker_build_command, (lambda do
+  "docker buildx build"
+end)
+
+# Pass additional options into `docker build`
+set :nomad_docker_build_command_options, (lambda do
+  [
+    "--cache-to type=gha",
+    "--cache-from type=gha",
+  ]
+end)
+
 # Make helpers available to all template .erb files
 nomad_template_helpers do
   def restart_stanza(interval = "1m")

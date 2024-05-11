@@ -67,39 +67,39 @@ end
 def capistrano_nomad_build_docker_image_for_type(image_type)
   image_type = image_type.to_sym
   attributes = fetch(:nomad_docker_image_types)[image_type]
+  command = fetch(:nomad_docker_build_command) || "docker build"
+  options = Array(fetch(:nomad_docker_build_command_options)) || []
 
   return unless attributes
 
   # No need to build if there's no path
   return unless attributes[:path]
 
-  args = [
-    # Ensure images are built for x86_64 which is production env otherwise it will default to local development env
-    # which can be arm64 (Apple Silicon)
-    "--platform linux/amd64",
-  ]
+  # Ensure images are built for x86_64 which is production env otherwise it will default to local development env which
+  # can be arm64 (Apple Silicon)
+  options << "--platform linux/amd64"
 
   if (target = attributes[:target])
-    args << "--target #{target}"
+    options << "--target #{target}"
   end
 
   build_args = attributes[:build_args]
   build_args = build_args.call if build_args&.is_a?(Proc)
 
   (build_args || []).each do |key, value|
-    args << "--build-arg #{key}=#{value}"
+    options << "--build-arg #{key}=#{value}"
   end
 
   docker_build_command = lambda do |path|
-    image_alias_args = args.dup
+    image_alias_options = options.dup
 
     [capistrano_nomad_build_docker_image_alias(image_type)]
       .compact
       .each do |tag|
-        image_alias_args << "--tag #{tag}"
+        image_alias_options << "--tag #{tag}"
       end
 
-    "docker build #{image_alias_args.join(' ')} #{path}"
+    "#{command} #{image_alias_options.join(' ')} #{path}"
   end
 
   case attributes[:strategy]
