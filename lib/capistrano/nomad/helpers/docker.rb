@@ -88,9 +88,9 @@ def capistrano_nomad_build_docker_image_for_type(image_type)
 
   (build_args || []).each do |key, value|
     # Escape single quotes so that we can properly pass in build arg values that have spaces and special characters
-    # e.g. Don't escape strings (#123) => $'Don\'t escape strings (#123)'
-    value_escaped = value.gsub("'", "\\\\'")
-    options << "--build-arg #{key}=$'#{value_escaped}'"
+    # e.g. Don't escape strings (#123) => 'Don'\''t escape strings (#123)'
+    value_escaped = value.gsub("'", "\'\\\\'\'")
+    options << "--build-arg #{key}='#{value_escaped}'"
   end
 
   docker_build_command = lambda do |path|
