@@ -87,19 +87,22 @@ def capistrano_nomad_build_docker_image_for_type(image_type)
   build_args = build_args.call if build_args&.is_a?(Proc)
 
   (build_args || []).each do |key, value|
-    options << "--build-arg #{key}=#{value}"
+    # Escape single quotes so that we can properly pass in build arg values that have spaces and special characters
+    # e.g. Don't escape strings (#123) => $'Don\'t escape strings (#123)'
+    value_escaped = value.gsub("'", "\\\\'")
+    options << "--build-arg #{key}=$'#{value_escaped}'"
   end
 
   docker_build_command = lambda do |path|
-    image_alias_options = options.dup
+    build_options = options.dup
 
     [capistrano_nomad_build_docker_image_alias(image_type)]
       .compact
       .each do |tag|
-        image_alias_options << "--tag #{tag}"
+        build_options << "--tag #{tag}"
       end
 
-    "#{command} #{image_alias_options.join(' ')} #{path}"
+    "#{command} #{build_options.join(' ')} #{path}"
   end
 
   case attributes[:strategy]
