@@ -325,6 +325,20 @@ def capistrano_nomad_define_group_tasks(namespace:)
       end
     end
 
+    desc "Restart #{namespace} jobs"
+    task :restart do
+      capistrano_nomad_fetch_jobs_names_by_namespace(namespace: namespace).each do |namespace_by, names|
+        capistrano_nomad_restart_jobs(names, namespace: namespace_by)
+      end
+    end
+
+    desc "Stop #{namespace} jobs"
+    task :stop do
+      capistrano_nomad_fetch_jobs_names_by_namespace(namespace: namespace).each do |namespace_by, names|
+        capistrano_nomad_stop_jobs(names, namespace: namespace_by)
+      end
+    end
+
     desc "Purge #{namespace} jobs"
     task :purge do
       capistrano_nomad_fetch_jobs_names_by_namespace(namespace: namespace).each do |namespace_by, names|
@@ -453,15 +467,15 @@ def capistrano_nomad_deploy_jobs(names, **options)
   capistrano_nomad_upload_run_jobs(names, **general_options.merge(options))
 end
 
-def capistrano_nomad_stop_jobs(names, **options)
-  names.each do |name|
-    capistrano_nomad_execute_nomad_command(:job, :stop, options, name)
-  end
-end
-
 def capistrano_nomad_restart_jobs(names, **options)
   names.each do |name|
     capistrano_nomad_execute_nomad_command(:job, :restart, options, name)
+  end
+end
+
+def capistrano_nomad_stop_jobs(names, **options)
+  names.each do |name|
+    capistrano_nomad_execute_nomad_command(:job, :stop, options, name)
   end
 end
 
