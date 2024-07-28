@@ -243,7 +243,7 @@ def capistrano_nomad_upload(local_path:, remote_path:, erb_vars: {})
 end
 
 def capistrano_nomad_fetch_namespace_options(namespace)
-  fetch(:nomad_namespaces).dig(namespace)
+  fetch(:nomad_namespaces)&.dig(namespace)
 end
 
 def capistrano_nomad_fetch_job_options(name, *args, namespace: nil)

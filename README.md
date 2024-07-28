@@ -102,14 +102,14 @@ nomad_job :backend, docker_image_types: [:backend], var_files: [:rails]
 nomad_job :frontend
 nomad_job :postgres, docker_image_types: [:postgres]
 nomad_job :redis, docker_image_types: [:redis], tags: [:redis]
-nomad_job :"traefik-default", template: :traefik,
+nomad_job :"traefik-default", template: :admin,
   erb_vars: { role: :default },
   tags: [:traefik]
-nomad_job :"traefik-secondary", template: :traefik,
+nomad_job :"traefik-secondary", template: :admin,
   erb_vars: { role: :secondary },
   tags: [:traefik]
 
-nomad_namespace :analytics do
+nomad_namespace :analytics, tags: [:admin] do
   nomad_job :grafana
 end
 
@@ -140,9 +140,9 @@ Tasks can go by namespace or `all` namespaces, and can also be filtered by tags
 cap production nomad:analytics:deploy
 cap production nomad:analytics:upload_run
 cap production nomad:all:deploy
-cap production nomad:all:deploy TAG=traefik
+cap production nomad:all:deploy TAG=admin
 cap production nomad:all:upload_run
-cap production nomad:all:upload_run TAGS=traefik,redis
+cap production nomad:all:upload_run TAGS=admin,redis
 ```
 
 Open console

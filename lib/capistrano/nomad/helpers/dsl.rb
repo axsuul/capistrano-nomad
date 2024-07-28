@@ -36,6 +36,13 @@ def nomad_namespace(namespace, **options, &block)
 end
 
 def nomad_job(name, attributes = {})
+  attributes[:tags] ||= []
+
+  # Tags added to namespace should be added to all jobs within
+  if (nomad_namespace_options = capistrano_nomad_fetch_namespace_options(@nomad_namespace))
+    attributes[:tags] += nomad_namespace_options[:tags] || []
+  end
+
   nomad_jobs = fetch(:nomad_jobs) || Hash.new { |h, n| h[n] = {} }
   nomad_jobs[@nomad_namespace][name] = attributes
 
