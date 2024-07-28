@@ -255,9 +255,9 @@ def capistrano_nomad_fetch_job_var_files(name, *args)
 end
 
 def capistrano_nomad_fetch_jobs_names_by_namespace(namespace: :all)
-  # Can pass tags via command line (e.g. tag=foo or tags=foo,bar)
+  # Can pass tags via command line (e.g. TAG=foo or TAGS=foo,bar)
   tags =
-    [ENV["tag"], ENV["tags"]].map do |tag_args|
+    [ENV["TAG"], ENV["TAGS"]].map do |tag_args|
       next unless tag_args.presence
 
       tag_args.split(",").map(&:presence).compact.map(&:to_sym)
