@@ -101,9 +101,10 @@ nomad_docker_image_type :restic,
 nomad_job :backend, docker_image_types: [:backend], var_files: [:rails]
 nomad_job :frontend
 nomad_job :postgres, docker_image_types: [:postgres]
-nomad_job :redis, docker_image_types: [:redis]
-nomad_job :"traefik-default", template: :traefik, erb_vars: { role: :default }
-nomad_job :"traefik-secondary", template: :traefik, erb_vars: { role: :secondary }
+nomad_job :redis, docker_image_types: [:redis], tags: [:redis]
+nomad_job :"traefik-default", template: :traefik, erb_vars: { role: :default }, tags: [:traefik]
+nomad_job :"traefik-secondary", template: :traefik, erb_vars: { role: :secondary }, tags: [:traefik]
+nomad_job :"traefik-tertiary", template: :traefik, erb_vars: { role: :secondary }, tags: [:traefik]
 
 nomad_namespace :analytics do
   nomad_job :grafana
@@ -130,13 +131,20 @@ cap production nomad:analytics:grafana:restart
 cap production nomad:postgres:status
 ```
 
-Most tasks are also available for namespace or all
+Most tasks are also available for namespace or `all`
 
 ```shell
 cap production nomad:analytics:deploy
 cap production nomad:analytics:upload_run
 cap production nomad:all:deploy
 cap production nomad:all:upload_run
+```
+
+Filter by tags
+
+```shell
+cap production nomad:all:deploy tag=traefik
+cap production nomad:all:upload_run tags=traefik,redis
 ```
 
 Open console

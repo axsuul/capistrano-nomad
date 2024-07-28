@@ -255,12 +255,26 @@ def capistrano_nomad_fetch_job_var_files(name, *args)
 end
 
 def capistrano_nomad_fetch_jobs_names_by_namespace(namespace: :all)
-  jobs_names_by_namespace = fetch(:nomad_jobs).transform_values(&:keys)
+  # Can pass tags via command line (e.g. tag=foo or tags=foo,bar)
+  tags =
+    [ENV["tag"], ENV["tags"]].map do |tag_args|
+      next unless tag_args.presence
 
-  # Filter by namespace unless it's all
-  jobs_names_by_namespace = jobs_names_by_namespace.slice(namespace) unless namespace == :all
+      tag_args.split(",").map(&:presence).compact.map(&:to_sym)
+    end
+      .flatten
+      .compact
 
-  jobs_names_by_namespace
+  fetch(:nomad_jobs).each_with_object({}) do |(jobs_namespace, jobs_options), hash|
+    next if namespace != :all && namespace != jobs_namespace
+
+    hash[jobs_namespace] = jobs_options.each_with_object([]) do |(job_name, job_options), collection|
+      # Filter jobs by tags if specified
+      next if tags.any? && ((job_options[:tags]&.map(&:to_sym) || []) & tags).empty?
+
+      collection << job_name
+    end
+  end
 end
 
 def capistrano_nomad_fetch_jobs_docker_image_types(names, namespace: nil)
