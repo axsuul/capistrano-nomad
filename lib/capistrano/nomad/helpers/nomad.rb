@@ -32,7 +32,7 @@ end
 def capistrano_nomad_build_file_path(parent_path, basename, kind: nil, namespace: :default)
   segments = [parent_path]
 
-  if namespace
+  unless namespace == :default
     case kind
 
     # Always upload to namespace folder on remote

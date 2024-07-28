@@ -16,6 +16,8 @@ def nomad_docker_image_type(image_type, attributes = {})
 end
 
 def nomad_namespace(namespace, **options, &block)
+  raise ArgumentError, "cannot define default nomad namespace" if namespace == :default
+
   nomad_namespaces = fetch(:nomad_namespaces) || {}
   nomad_namespaces[namespace] = options
   set(:nomad_namespaces, nomad_namespaces)
@@ -53,7 +55,7 @@ def nomad_job(name, attributes = {})
 
   define_tasks = lambda do |namespace: nil|
     description_name = ""
-    description_name << "#{namespace}/" if namespace
+    description_name << "#{namespace}/" if namespace != :default
     description_name << name.to_s
 
     namespace(name) do
@@ -164,8 +166,10 @@ def nomad_job(name, attributes = {})
   end
 
   namespace(:nomad) do
-    # Define tasks for service
     if @nomad_namespace
+      # Also define tasks without namespace for default Nomad namespace
+      define_tasks.call(namespace: @nomad_namespace) if @nomad_namespace == :default
+
       namespace(@nomad_namespace) do
         define_tasks.call(namespace: @nomad_namespace)
       end
