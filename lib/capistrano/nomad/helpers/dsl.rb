@@ -36,6 +36,9 @@ def nomad_namespace(namespace, **options, &block)
 end
 
 def nomad_job(name, attributes = {})
+  # This is the namespace when there's no namespace defined in Nomad too
+  @nomad_namespace ||= :default
+
   attributes[:tags] ||= []
 
   # Tags added to namespace should be added to all jobs within

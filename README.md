@@ -134,15 +134,15 @@ cap production nomad:analytics:grafana:restart
 cap production nomad:postgres:status
 ```
 
-Tasks can go by namespace or `all` namespaces, and can also be filtered by tags
+Tasks can apply across all namespaces or be filtered by namespaces or tags
 
 ```shell
 cap production nomad:analytics:deploy
 cap production nomad:analytics:upload_run
-cap production nomad:all:deploy
-cap production nomad:all:deploy TAG=admin
-cap production nomad:all:upload_run
-cap production nomad:all:upload_run TAGS=admin,redis
+cap production nomad:deploy
+cap production nomad:deploy TAG=admin
+cap production nomad:upload_run
+cap production nomad:upload_run TAGS=admin,redis
 ```
 
 Open console
@@ -171,7 +171,7 @@ cap production nomad:app:ui
 Create missing and delete unused namespaces
 
 ```shell
-cap production nomad:all:modify_namespaces
+cap production nomad:modify_namespaces
 ```
 
 ## Development

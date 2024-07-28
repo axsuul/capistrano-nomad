@@ -254,7 +254,7 @@ def capistrano_nomad_fetch_job_var_files(name, *args)
   capistrano_nomad_fetch_job_options(name, :var_files, *args) || []
 end
 
-def capistrano_nomad_fetch_jobs_names_by_namespace(namespace: :all)
+def capistrano_nomad_fetch_jobs_names_by_namespace(namespace: nil)
   # Can pass tags via command line (e.g. TAG=foo or TAGS=foo,bar)
   tags =
     [ENV["TAG"], ENV["TAGS"]].map do |tag_args|
@@ -266,7 +266,7 @@ def capistrano_nomad_fetch_jobs_names_by_namespace(namespace: :all)
       .compact
 
   fetch(:nomad_jobs).each_with_object({}) do |(jobs_namespace, jobs_options), hash|
-    next if namespace != :all && namespace != jobs_namespace
+    next if !namespace.nil? && namespace != jobs_namespace
 
     hash[jobs_namespace] = jobs_options.each_with_object([]) do |(job_name, job_options), collection|
       # Filter jobs by tags if specified
@@ -281,84 +281,92 @@ def capistrano_nomad_fetch_jobs_docker_image_types(names, namespace: nil)
   names.map { |n| fetch(:nomad_jobs).dig(namespace, n.to_sym, :docker_image_types) }.flatten.compact.uniq
 end
 
-def capistrano_nomad_define_group_tasks(namespace:)
-  namespace(namespace) do
-    desc "Build #{namespace} job Docker images"
+def capistrano_nomad_define_group_tasks(namespace: nil)
+  define_tasks = lambda do |nomad_namespace: nil|
+    desc "Build #{nomad_namespace} job Docker images"
     task :build do
-      capistrano_nomad_fetch_jobs_names_by_namespace(namespace: namespace).each do |namespace_by, names|
-        capistrano_nomad_push_jobs_docker_images(names, namespace: namespace_by)
+      capistrano_nomad_fetch_jobs_names_by_namespace(namespace: nomad_namespace).each do |jobs_namespace, names|
+        capistrano_nomad_push_jobs_docker_images(names, namespace: jobs_namespace)
       end
     end
 
-    desc "Push #{namespace} job Docker images"
+    desc "Push #{nomad_namespace} job Docker images"
     task :push do
-      capistrano_nomad_fetch_jobs_names_by_namespace(namespace: namespace).each do |namespace_by, names|
-        capistrano_nomad_push_jobs_docker_images(names, namespace: namespace_by)
+      capistrano_nomad_fetch_jobs_names_by_namespace(namespace: nomad_namespace).each do |jobs_namespace, names|
+        capistrano_nomad_push_jobs_docker_images(names, namespace: jobs_namespace)
       end
     end
 
-    desc "Build and push #{namespace} job Docker images"
+    desc "Build and push #{nomad_namespace} job Docker images"
     task :assemble do
-      capistrano_nomad_fetch_jobs_names_by_namespace(namespace: namespace).each do |namespace_by, names|
-        capistrano_nomad_assemble_jobs_docker_images(names, namespace: namespace_by)
+      capistrano_nomad_fetch_jobs_names_by_namespace(namespace: nomad_namespace).each do |jobs_namespace, names|
+        capistrano_nomad_assemble_jobs_docker_images(names, namespace: jobs_namespace)
       end
     end
 
-    desc "Upload #{namespace} jobs"
+    desc "Upload #{nomad_namespace} jobs"
     task :upload do
-      capistrano_nomad_fetch_jobs_names_by_namespace(namespace: namespace).each do |namespace_by, names|
-        capistrano_nomad_upload_jobs(names, namespace: namespace_by)
+      capistrano_nomad_fetch_jobs_names_by_namespace(namespace: nomad_namespace).each do |jobs_namespace, names|
+        capistrano_nomad_upload_jobs(names, namespace: jobs_namespace)
       end
     end
 
-    desc "Run #{namespace} jobs"
+    desc "Run #{nomad_namespace} jobs"
     task :run do
-      capistrano_nomad_fetch_jobs_names_by_namespace(namespace: namespace).each do |namespace_by, names|
-        capistrano_nomad_run_jobs(names, namespace: namespace_by)
+      capistrano_nomad_fetch_jobs_names_by_namespace(namespace: nomad_namespace).each do |jobs_namespace, names|
+        capistrano_nomad_run_jobs(names, namespace: jobs_namespace)
       end
     end
 
-    desc "Upload and run #{namespace} jobs"
+    desc "Upload and run #{nomad_namespace} jobs"
     task :upload_run do
-      capistrano_nomad_fetch_jobs_names_by_namespace(namespace: namespace).each do |namespace_by, names|
-        capistrano_nomad_upload_run_jobs(names, namespace: namespace_by)
+      capistrano_nomad_fetch_jobs_names_by_namespace(namespace: nomad_namespace).each do |jobs_namespace, names|
+        capistrano_nomad_upload_run_jobs(names, namespace: jobs_namespace)
       end
     end
 
-    desc "Deploy #{namespace} jobs"
+    desc "Deploy #{nomad_namespace} jobs"
     task :deploy do
-      capistrano_nomad_fetch_jobs_names_by_namespace(namespace: namespace).each do |namespace_by, names|
-        capistrano_nomad_deploy_jobs(names, namespace: namespace_by)
+      capistrano_nomad_fetch_jobs_names_by_namespace(namespace: nomad_namespace).each do |jobs_namespace, names|
+        capistrano_nomad_deploy_jobs(names, namespace: jobs_namespace)
       end
     end
 
-    desc "Rerun #{namespace} jobs"
+    desc "Rerun #{nomad_namespace} jobs"
     task :rerun do
-      capistrano_nomad_fetch_jobs_names_by_namespace(namespace: namespace).each do |namespace_by, names|
-        capistrano_nomad_rerun_jobs(names, namespace: namespace_by)
+      capistrano_nomad_fetch_jobs_names_by_namespace(namespace: nomad_namespace).each do |jobs_namespace, names|
+        capistrano_nomad_rerun_jobs(names, namespace: jobs_namespace)
       end
     end
 
-    desc "Restart #{namespace} jobs"
+    desc "Restart #{nomad_namespace} jobs"
     task :restart do
-      capistrano_nomad_fetch_jobs_names_by_namespace(namespace: namespace).each do |namespace_by, names|
-        capistrano_nomad_restart_jobs(names, namespace: namespace_by)
+      capistrano_nomad_fetch_jobs_names_by_namespace(namespace: nomad_namespace).each do |jobs_namespace, names|
+        capistrano_nomad_restart_jobs(names, namespace: jobs_namespace)
       end
     end
 
-    desc "Stop #{namespace} jobs"
+    desc "Stop #{nomad_namespace} jobs"
     task :stop do
-      capistrano_nomad_fetch_jobs_names_by_namespace(namespace: namespace).each do |namespace_by, names|
-        capistrano_nomad_stop_jobs(names, namespace: namespace_by)
+      capistrano_nomad_fetch_jobs_names_by_namespace(namespace: nomad_namespace).each do |jobs_namespace, names|
+        capistrano_nomad_stop_jobs(names, namespace: jobs_namespace)
       end
     end
 
-    desc "Purge #{namespace} jobs"
+    desc "Purge #{nomad_namespace} jobs"
     task :purge do
-      capistrano_nomad_fetch_jobs_names_by_namespace(namespace: namespace).each do |namespace_by, names|
-        capistrano_nomad_purge_jobs(names, namespace: namespace_by)
+      capistrano_nomad_fetch_jobs_names_by_namespace(namespace: nomad_namespace).each do |jobs_namespace, names|
+        capistrano_nomad_purge_jobs(names, namespace: jobs_namespace)
       end
     end
+  end
+
+  if namespace
+    namespace(namespace) do
+      define_tasks.call(nomad_namespace: namespace)
+    end
+  else
+    define_tasks.call
   end
 end
 
