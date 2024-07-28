@@ -131,18 +131,13 @@ cap production nomad:analytics:grafana:restart
 cap production nomad:postgres:status
 ```
 
-Most tasks are also available for namespace or `all`
+Tasks can go by namespace or `all` namespaces, and can also be filtered by tags
 
 ```shell
 cap production nomad:analytics:deploy
 cap production nomad:analytics:upload_run
 cap production nomad:all:deploy
 cap production nomad:all:upload_run
-```
-
-Filter by tags
-
-```shell
 cap production nomad:all:deploy tag=traefik
 cap production nomad:all:upload_run tags=traefik,redis
 ```
