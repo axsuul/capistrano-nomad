@@ -29,7 +29,7 @@ def capistrano_nomad_ensure_absolute_path(path)
   path[0] == "/" ? path : "/#{path}"
 end
 
-def capistrano_nomad_build_file_path(parent_path, basename, kind: nil, namespace: nil)
+def capistrano_nomad_build_file_path(parent_path, basename, kind: nil, namespace: :default)
   segments = [parent_path]
 
   if namespace
@@ -132,7 +132,7 @@ def capistrano_nomad_capture_nomad_command(*args)
   output
 end
 
-def capistrano_nomad_find_job_task_details(name, namespace: nil, task: nil)
+def capistrano_nomad_find_job_task_details(name, namespace: :default, task: nil)
   task = task.presence || name
 
   # Find alloc id that contains task
@@ -170,7 +170,7 @@ def capistrano_nomad_find_job_task_details(name, namespace: nil, task: nil)
   }
 end
 
-def capistrano_nomad_exec_within_job(name, command, namespace: nil, task: nil)
+def capistrano_nomad_exec_within_job(name, command, namespace: :default, task: nil)
   capistrano_nomad_run_remotely do
     if (task_details = capistrano_nomad_find_job_task_details(name, namespace: namespace, task: task))
       capistrano_nomad_execute_nomad_command(
@@ -246,7 +246,7 @@ def capistrano_nomad_fetch_namespace_options(namespace)
   fetch(:nomad_namespaces)&.dig(namespace)
 end
 
-def capistrano_nomad_fetch_job_options(name, *args, namespace: nil)
+def capistrano_nomad_fetch_job_options(name, *args, namespace: :default)
   fetch(:nomad_jobs).dig(namespace, name.to_sym, *args)
 end
 
@@ -254,7 +254,7 @@ def capistrano_nomad_fetch_job_var_files(name, *args)
   capistrano_nomad_fetch_job_options(name, :var_files, *args) || []
 end
 
-def capistrano_nomad_fetch_jobs_names_by_namespace(namespace: nil)
+def capistrano_nomad_fetch_jobs_names_by_namespace(namespace: :default)
   # Can pass tags via command line (e.g. TAG=foo or TAGS=foo,bar)
   tags =
     [ENV["TAG"], ENV["TAGS"]].map do |tag_args|
@@ -277,11 +277,11 @@ def capistrano_nomad_fetch_jobs_names_by_namespace(namespace: nil)
   end
 end
 
-def capistrano_nomad_fetch_jobs_docker_image_types(names, namespace: nil)
+def capistrano_nomad_fetch_jobs_docker_image_types(names, namespace: :default)
   names.map { |n| fetch(:nomad_jobs).dig(namespace, n.to_sym, :docker_image_types) }.flatten.compact.uniq
 end
 
-def capistrano_nomad_define_group_tasks(namespace: nil)
+def capistrano_nomad_define_group_tasks(namespace:)
   define_tasks = lambda do |nomad_namespace: nil|
     desc "Build #{nomad_namespace} job Docker images"
     task :build do
@@ -429,7 +429,7 @@ def capistrano_nomad_plan_jobs(names, *args)
   end
 end
 
-def capistrano_nomad_run_jobs(names, namespace: nil, is_detached: true)
+def capistrano_nomad_run_jobs(names, namespace: :default, is_detached: true)
   names.each do |name|
     run_options = {
       namespace: namespace,
@@ -501,7 +501,7 @@ def capistrano_nomad_stop_jobs(names, **options)
   end
 end
 
-def capistrano_nomad_purge_jobs(names, namespace: nil, is_detached: true)
+def capistrano_nomad_purge_jobs(names, namespace: :default, is_detached: true)
   names.each do |name|
     capistrano_nomad_execute_nomad_command(:stop, { namespace: namespace, purge: true, detach: is_detached }, name)
   end
@@ -511,7 +511,7 @@ def capistrano_nomad_display_job_status(name, **options)
   capistrano_nomad_execute_nomad_command(:status, options, name)
 end
 
-def capistrano_nomad_display_job_logs(name, namespace: nil, **options)
+def capistrano_nomad_display_job_logs(name, namespace: :default, **options)
   if (task_details = capistrano_nomad_find_job_task_details(name, namespace: namespace, task: ENV["TASK"]))
     capistrano_nomad_execute_nomad_command(
       :alloc,
@@ -534,7 +534,7 @@ def capistrano_nomad_tail_job_logs(*args, **options)
   capistrano_nomad_display_job_logs(*args, **options.merge(tail: true, n: 50))
 end
 
-def capistrano_nomad_open_job_ui(name, namespace: nil)
+def capistrano_nomad_open_job_ui(name, namespace: :default)
   run_locally do
     url = "#{fetch(:nomad_ui_url)}/ui/jobs/#{name}"
     url += "@#{namespace}" if namespace

@@ -1,6 +1,6 @@
 namespace :nomad do
   # Define tasks for all jobs
-  capistrano_nomad_define_group_tasks
+  capistrano_nomad_define_group_tasks(namespace: nil)
 
   desc "Create missing and remove unused namespaces"
   task :modify_namespaces do
