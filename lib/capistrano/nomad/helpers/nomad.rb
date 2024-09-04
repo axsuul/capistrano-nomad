@@ -135,14 +135,18 @@ end
 def capistrano_nomad_find_job_task_details(name, namespace: :default, task: nil)
   task = task.presence || name
 
-  # Find alloc id that contains task
+  # Find alloc id that contains task that is also running
   allocs_output = capistrano_nomad_capture_nomad_command(
     :job,
     :allocs,
-    { namespace: namespace, t: "'{{range .}}{{ .ID }},{{ .TaskGroup }}|{{end}}'" },
+    { namespace: namespace, t: "'{{range .}}{{ .ID }},{{ .ClientStatus }},{{ .TaskGroup }}|{{end}}'" },
     name,
   )
-  alloc_id = allocs_output.split("|").map { |s| s.split(",") }.find { |_, t| t == task.to_s }&.first
+  alloc_id = allocs_output
+    .split("|")
+    .map { |s| s.split(",") }
+    .find { |_, s, t| s == "running" && t == task.to_s }
+    &.first
 
   # Can't continue if we can't choose an alloc id
   return unless alloc_id
