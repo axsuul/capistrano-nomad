@@ -495,7 +495,9 @@ end
 
 def capistrano_nomad_restart_jobs(names, **options)
   names.each do |name|
-    capistrano_nomad_execute_nomad_command(:job, :restart, options, name)
+    # Automatic yes to prompts. If set, the command automatically restarts multi-region jobs only in the region targeted
+    # by the command, ignores batch errors, and automatically proceeds with the remaining batches without waiting
+    capistrano_nomad_execute_nomad_command(:job, :restart, options.reverse_merge(yes: true), name)
   end
 end
 
