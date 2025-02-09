@@ -52,12 +52,12 @@ def capistrano_nomad_build_file_path(parent_path, basename, kind: nil, namespace
   segments.join("/")
 end
 
-def capistrano_nomad_build_base_job_path(*args)
-  capistrano_nomad_build_file_path(fetch(:nomad_jobs_path), *args)
+def capistrano_nomad_build_base_job_path(*args, **options)
+  capistrano_nomad_build_file_path(fetch(:nomad_jobs_path), *args, **options)
 end
 
-def capistrano_nomad_build_base_var_file_path(*args)
-  capistrano_nomad_build_file_path(fetch(:nomad_var_files_path), *args)
+def capistrano_nomad_build_base_var_file_path(*args, **options)
+  capistrano_nomad_build_file_path(fetch(:nomad_var_files_path), *args, **options)
 end
 
 def capistrano_nomad_build_local_path(path)
@@ -71,12 +71,12 @@ def capistrano_nomad_build_local_path(path)
   found_local_path
 end
 
-def capistrano_nomad_build_local_job_path(name, *args)
-  capistrano_nomad_build_local_path(capistrano_nomad_build_base_job_path(name, *args))
+def capistrano_nomad_build_local_job_path(name, **options)
+  capistrano_nomad_build_local_path(capistrano_nomad_build_base_job_path(name, **options))
 end
 
-def capistrano_nomad_build_local_var_file_path(name, *args)
-  capistrano_nomad_build_local_path(capistrano_nomad_build_base_var_file_path(name, *args))
+def capistrano_nomad_build_local_var_file_path(name, **options)
+  capistrano_nomad_build_local_path(capistrano_nomad_build_base_var_file_path(name, **options))
 end
 
 def capistrano_nomad_build_release_job_path(name, **options)
@@ -114,19 +114,19 @@ def capistrano_nomad_run_nomad_command(kind, *args)
   public_send(kind, :nomad, *converted_args, raise_on_non_zero_exit: false)
 end
 
-def capistrano_nomad_execute_nomad_command(*args)
+def capistrano_nomad_execute_nomad_command(*args, **options)
   capistrano_nomad_run_remotely do |host|
     run_interactively(host) do
-      capistrano_nomad_run_nomad_command(:execute, *args)
+      capistrano_nomad_run_nomad_command(:execute, *args, **options)
     end
   end
 end
 
-def capistrano_nomad_capture_nomad_command(*args)
+def capistrano_nomad_capture_nomad_command(*args, **options)
   output = nil
 
   capistrano_nomad_run_remotely do
-    output = capistrano_nomad_run_nomad_command(:capture, *args)
+    output = capistrano_nomad_run_nomad_command(:capture, *args, **options)
   end
 
   output
@@ -374,41 +374,41 @@ def capistrano_nomad_define_group_tasks(namespace:)
   end
 end
 
-def capistrano_nomad_build_jobs_docker_images(names, *args)
-  image_types = capistrano_nomad_fetch_jobs_docker_image_types(names, *args)
+def capistrano_nomad_build_jobs_docker_images(names, **options)
+  image_types = capistrano_nomad_fetch_jobs_docker_image_types(names, **options)
 
   return false if image_types.empty?
 
   image_types.each { |i| capistrano_nomad_build_docker_image_for_type(i) }
 end
 
-def capistrano_nomad_push_jobs_docker_images(names, *args)
-  image_types = capistrano_nomad_fetch_jobs_docker_image_types(names, *args)
+def capistrano_nomad_push_jobs_docker_images(names, **options)
+  image_types = capistrano_nomad_fetch_jobs_docker_image_types(names, **options)
 
   return false if image_types.empty?
 
   image_types.each { |i| capistrano_nomad_push_docker_image_for_type(i) }
 end
 
-def capistrano_nomad_assemble_jobs_docker_images(names, *args)
-  capistrano_nomad_build_jobs_docker_images(names, *args)
-  capistrano_nomad_push_jobs_docker_images(names, *args)
+def capistrano_nomad_assemble_jobs_docker_images(names, **options)
+  capistrano_nomad_build_jobs_docker_images(names, **options)
+  capistrano_nomad_push_jobs_docker_images(names, **options)
 end
 
-def capistrano_nomad_upload_jobs(names, *args)
+def capistrano_nomad_upload_jobs(names, **options)
   # Var files can be shared between jobs so don't upload duplicates
-  uniq_var_files = names.map { |n| capistrano_nomad_fetch_job_var_files(n, *args) }.flatten.uniq
+  uniq_var_files = names.map { |n| capistrano_nomad_fetch_job_var_files(n, **options) }.flatten.uniq
 
   uniq_var_files.each do |var_file|
     capistrano_nomad_upload(
-      local_path: capistrano_nomad_build_local_var_file_path(var_file, *args),
-      remote_path: capistrano_nomad_build_release_var_file_path(var_file, *args),
+      local_path: capistrano_nomad_build_local_var_file_path(var_file, **options),
+      remote_path: capistrano_nomad_build_release_var_file_path(var_file, **options),
     )
   end
 
   run_locally do
     names.each do |name|
-      nomad_job_options = capistrano_nomad_fetch_job_options(name, *args)
+      nomad_job_options = capistrano_nomad_fetch_job_options(name, **options)
 
       # Can set job-specific ERB vars
       erb_vars = nomad_job_options[:erb_vars] || {}
@@ -417,17 +417,17 @@ def capistrano_nomad_upload_jobs(names, *args)
       file_basename = nomad_job_options[:template] || name
 
       capistrano_nomad_upload(
-        local_path: capistrano_nomad_build_local_job_path(file_basename, *args),
-        remote_path: capistrano_nomad_build_release_job_path(name, *args),
+        local_path: capistrano_nomad_build_local_job_path(file_basename, **options),
+        remote_path: capistrano_nomad_build_release_job_path(name, **options),
         erb_vars: erb_vars,
       )
     end
   end
 end
 
-def capistrano_nomad_plan_jobs(names, *args)
+def capistrano_nomad_plan_jobs(names, **options)
   names.each do |name|
-    args = [capistrano_nomad_build_release_job_path(name, *args)]
+    args = [capistrano_nomad_build_release_job_path(name, **options)]
 
     capistrano_nomad_execute_nomad_command(:plan, *args)
   end
