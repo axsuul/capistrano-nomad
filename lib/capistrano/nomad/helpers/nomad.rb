@@ -254,8 +254,8 @@ def capistrano_nomad_fetch_job_options(name, *args, namespace: :default)
   fetch(:nomad_jobs).dig(namespace, name.to_sym, *args)
 end
 
-def capistrano_nomad_fetch_job_var_files(name, *args)
-  capistrano_nomad_fetch_job_options(name, :var_files, *args) || []
+def capistrano_nomad_fetch_job_var_files(name, **options)
+  capistrano_nomad_fetch_job_options(name, :var_files, **options) || []
 end
 
 def capistrano_nomad_fetch_jobs_names_by_namespace(namespace: :default)
