@@ -350,6 +350,13 @@ def capistrano_nomad_define_group_tasks(namespace:)
       end
     end
 
+    desc "Revert #{nomad_namespace} jobs"
+    task :revert do
+      capistrano_nomad_fetch_jobs_names_by_namespace(namespace: nomad_namespace).each do |jobs_namespace, names|
+        capistrano_nomad_revert_jobs(names, namespace: jobs_namespace)
+      end
+    end
+
     desc "Stop #{nomad_namespace} jobs"
     task :stop do
       capistrano_nomad_fetch_jobs_names_by_namespace(namespace: nomad_namespace).each do |jobs_namespace, names|
@@ -511,6 +518,14 @@ def capistrano_nomad_purge_jobs(names, namespace: :default, is_detached: true)
   names.each do |name|
     capistrano_nomad_execute_nomad_command(:stop, { namespace: namespace, purge: true, detach: is_detached }, name)
   end
+end
+
+def capistrano_nomad_revert_job(name, version, **options)
+  capistrano_nomad_execute_nomad_command(:job, :revert, options, name, version)
+end
+
+def capistrano_nomad_display_job_history(name, **options)
+  capistrano_nomad_capture_nomad_command(:job, :history, options, name)
 end
 
 def capistrano_nomad_display_job_status(name, **options)

@@ -120,6 +120,20 @@ def nomad_job(name, attributes = {})
         capistrano_nomad_restart_jobs([name], namespace: namespace)
       end
 
+      desc "Revert #{description_name} job. Specify version with VERSION. If no version passed in, revert to previous"
+      task :revert do
+        version = ENV["VERSION"].presence
+
+        unless version
+          history_output_json = capistrano_nomad_display_job_history(name, namespace: namespace, json: true)
+          history_output = JSON.parse(history_output_json)
+          # Second item is previous version
+          version = history_output[1].dig("Version")
+        end
+
+        capistrano_nomad_revert_job(name, version, namespace: namespace)
+      end
+
       desc "Purge #{description_name} job"
       task :purge do
         capistrano_nomad_purge_jobs([name], namespace: namespace, is_detached: false)
