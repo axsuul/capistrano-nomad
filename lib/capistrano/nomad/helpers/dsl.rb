@@ -44,7 +44,7 @@ def nomad_job(name, attributes = {})
   attributes[:tags] ||= []
 
   # Tags added to namespace should be added to all jobs within
-  if (nomad_namespace_options = capistrano_nomad_fetch_namespace_options(@nomad_namespace))
+  if (nomad_namespace_options = capistrano_nomad_fetch_namespace_options(namespace: @nomad_namespace))
     attributes[:tags] += nomad_namespace_options[:tags] || []
   end
 
@@ -120,9 +120,12 @@ def nomad_job(name, attributes = {})
         capistrano_nomad_restart_jobs([name], namespace: namespace)
       end
 
-      desc "Revert #{description_name} job. Specify version with VERSION. If no version passed in, revert to previous"
+      desc "Revert #{description_name} job. Specify version with VERSION. Specify targeting tasks with docker image with DOCKER_IMAGE. If none specified, it will revert to previous version"
       task :revert do
-        capistrano_nomad_revert_jobs([name], ENV["VERSION"].presence, namespace: namespace)
+        capistrano_nomad_revert_jobs([name], ENV["VERSION"].presence,
+          namespace: namespace,
+          docker_image: ENV["DOCKER_IMAGE"],
+        )
       end
 
       desc "Purge #{description_name} job"

@@ -29,7 +29,9 @@ def capistrano_nomad_ensure_absolute_path(path)
   path[0] == "/" ? path : "/#{path}"
 end
 
-def capistrano_nomad_build_file_path(parent_path, basename, namespace:, kind: nil)
+def capistrano_nomad_build_file_path(parent_path, basename, kind: nil, **options)
+  capistrano_nomad_ensure_options!(**options)
+  namespace = options[:namespace]
   segments = [parent_path]
 
   unless namespace == :default
@@ -41,7 +43,7 @@ def capistrano_nomad_build_file_path(parent_path, basename, namespace:, kind: ni
 
     # Otherwise path can be overriden of where files belonging to namespace are stored locally
     else
-      namespace_options = capistrano_nomad_fetch_namespace_options(namespace)
+      namespace_options = capistrano_nomad_fetch_namespace_options(namespace: namespace)
 
       segments << (namespace_options[:path] || namespace)
     end
@@ -132,14 +134,15 @@ def capistrano_nomad_capture_nomad_command(*args, **options)
   output
 end
 
-def capistrano_nomad_find_job_task_details(name, namespace:, task: nil)
+def capistrano_nomad_find_job_task_details(name, task: nil, **options)
+  capistrano_nomad_ensure_options!(**options)
   task = task.presence || name
 
   # Find alloc id that contains task that is also running
   allocs_output = capistrano_nomad_capture_nomad_command(
     :job,
     :allocs,
-    { namespace: namespace, t: "'{{range .}}{{ .ID }},{{ .ClientStatus }},{{ .TaskGroup }}|{{end}}'" },
+    options.merge(t: "'{{range .}}{{ .ID }},{{ .ClientStatus }},{{ .TaskGroup }}|{{end}}'"),
     name,
   )
   alloc_id = allocs_output
@@ -154,7 +157,7 @@ def capistrano_nomad_find_job_task_details(name, namespace:, task: nil)
   tasks_output = capistrano_nomad_capture_nomad_command(
     :alloc,
     :status,
-    { namespace: namespace, t: "'{{range $key, $value := .TaskStates}}{{ $key }},{{ .State }}|{{end}}'" },
+    options.merge(t: "'{{range $key, $value := .TaskStates}}{{ $key }},{{ .State }}|{{end}}'"),
     alloc_id,
   )
   tasks_by_score = tasks_output.split("|").each_with_object({}) do |task_output, hash|
@@ -174,13 +177,15 @@ def capistrano_nomad_find_job_task_details(name, namespace:, task: nil)
   }
 end
 
-def capistrano_nomad_exec_within_job(name, command, namespace:, task: nil)
+def capistrano_nomad_exec_within_job(name, command, task: nil, **options)
+  capistrano_nomad_ensure_options!(**options)
+
   capistrano_nomad_run_remotely do
-    if (task_details = capistrano_nomad_find_job_task_details(name, namespace: namespace, task: task))
+    if (task_details = capistrano_nomad_find_job_task_details(name, task: task, **options))
       capistrano_nomad_execute_nomad_command(
         :alloc,
         :exec,
-        { namespace: namespace, task: task_details[:name] },
+        options.merge(task: task_details[:name]),
         task_details[:alloc_id],
         command,
       )
@@ -189,7 +194,7 @@ def capistrano_nomad_exec_within_job(name, command, namespace:, task: nil)
       capistrano_nomad_execute_nomad_command(
         :alloc,
         :exec,
-        { namespace: namespace, job: true },
+        options.merge(job: true),
         task,
         command,
       )
@@ -246,19 +251,30 @@ def capistrano_nomad_upload(local_path:, remote_path:, erb_vars: {})
   end
 end
 
-def capistrano_nomad_fetch_namespace_options(namespace)
-  fetch(:nomad_namespaces)&.dig(namespace)
+def capistrano_nomad_ensure_options!(**options)
+  options[:namespace] ||= :default
 end
 
-def capistrano_nomad_fetch_job_options(name, *args, namespace:)
-  fetch(:nomad_jobs).dig(namespace, name.to_sym, *args)
+def capistrano_nomad_fetch_namespace_options(**options)
+  capistrano_nomad_ensure_options!(**options)
+
+  fetch(:nomad_namespaces)&.dig(options[:namespace])
+end
+
+def capistrano_nomad_fetch_job_options(name, *args, **options)
+  capistrano_nomad_ensure_options!(**options)
+
+  fetch(:nomad_jobs).dig(options[:namespace], name.to_sym, *args)
 end
 
 def capistrano_nomad_fetch_job_var_files(name, **options)
   capistrano_nomad_fetch_job_options(name, :var_files, **options) || []
 end
 
-def capistrano_nomad_fetch_jobs_names_by_namespace(namespace:)
+def capistrano_nomad_fetch_jobs_names_by_namespace(**options)
+  capistrano_nomad_ensure_options!(**options)
+  namespace = options[:namespace]
+
   # Can pass tags via command line (e.g. TAG=foo or TAGS=foo,bar)
   tags =
     [ENV["TAG"], ENV["TAGS"]].map do |tag_args|
@@ -281,8 +297,10 @@ def capistrano_nomad_fetch_jobs_names_by_namespace(namespace:)
   end
 end
 
-def capistrano_nomad_fetch_jobs_docker_image_types(names, namespace:)
-  names.map { |n| fetch(:nomad_jobs).dig(namespace, n.to_sym, :docker_image_types) }.flatten.compact.uniq
+def capistrano_nomad_fetch_jobs_docker_image_types(names, **options)
+  capistrano_nomad_ensure_options!(**options)
+
+  names.map { |n| fetch(:nomad_jobs).dig(options[:namespace], n.to_sym, :docker_image_types) }.flatten.compact.uniq
 end
 
 def capistrano_nomad_define_group_tasks(namespace:)
@@ -440,24 +458,26 @@ def capistrano_nomad_plan_jobs(names, **options)
   end
 end
 
-def capistrano_nomad_run_jobs(names, namespace:, is_detached: true)
+def capistrano_nomad_run_jobs(names, is_detached: true, **options)
+  capistrano_nomad_ensure_options!(**options)
+
   names.each do |name|
     run_options = {
-      namespace: namespace,
+      namespace: options[:namespace],
       detach: is_detached,
 
       # Don't reset counts since they may have been scaled
       preserve_counts: true,
     }
 
-    capistrano_nomad_fetch_job_var_files(name, namespace: namespace).each do |var_file|
-      run_options[:var_file] = capistrano_nomad_build_release_var_file_path(var_file, namespace: namespace)
+    capistrano_nomad_fetch_job_var_files(name, **options).each do |var_file|
+      run_options[:var_file] = capistrano_nomad_build_release_var_file_path(var_file, **options)
     end
 
     capistrano_nomad_execute_nomad_command(
       :run,
       run_options,
-      capistrano_nomad_build_release_job_path(name, namespace: namespace),
+      capistrano_nomad_build_release_job_path(name, **options),
     )
   end
 end
@@ -501,6 +521,8 @@ def capistrano_nomad_deploy_jobs(names, **options)
 end
 
 def capistrano_nomad_restart_jobs(names, **options)
+  capistrano_nomad_ensure_options!(**options)
+
   names.each do |name|
     # Automatic yes to prompts. If set, the command automatically restarts multi-region jobs only in the region targeted
     # by the command, ignores batch errors, and automatically proceeds with the remaining batches without waiting
@@ -509,35 +531,65 @@ def capistrano_nomad_restart_jobs(names, **options)
 end
 
 def capistrano_nomad_stop_jobs(names, **options)
+  capistrano_nomad_ensure_options!(**options)
+
   names.each do |name|
     capistrano_nomad_execute_nomad_command(:job, :stop, options, name)
   end
 end
 
 def capistrano_nomad_purge_jobs(names, is_detached: true, **options)
+  capistrano_nomad_ensure_options!(**options)
+
   names.each do |name|
     capistrano_nomad_execute_nomad_command(:stop, options.reverse_merge(purge: true, detach: is_detached), name)
   end
 end
 
-def capistrano_nomad_revert_jobs(names, version, **options)
+def capistrano_nomad_revert_jobs(names, version, docker_image: nil, **options)
+  capistrano_nomad_ensure_options!(**options)
+  versions_by_job_name = {}
+
   names.each do |name|
-    version_for_name = version || begin
-      history_output_json = capistrano_nomad_display_job_history(name, **options.reverse_merge(json: true))
-      history_output = JSON.parse(history_output_json)
-      # Second item is previous version
+    history_output_json = capistrano_nomad_display_job_history(name, **options.reverse_merge(json: true))
+    history_output = JSON.parse(history_output_json)
+
+    versions_by_job_name[name] = if docker_image
+      # Find job history with matching docker image
+      docker_image_job_history = history_output.find do |job_history|
+        task_images = job_history.dig("TaskGroups")
+          .map { |g| g.dig("Tasks").map { |t| t.dig("Config", "image") } }
+          .flatten
+          .compact
+
+        task_images.any? { |image| image.include?(docker_image) }
+      end
+
+      unless docker_image_job_history
+        raise ArgumentError, "No job history found for job #{name} with docker image: #{docker_image}"
+      end
+
+      docker_image_job_history.dig("Version")
+    else
+      # If no version specified then revert to previous version
       history_output[1].dig("Version")
     end
+  end
 
-    capistrano_nomad_execute_nomad_command(:job, :revert, options, name, version_for_name)
+  versions_by_job_name.each do |name, version|
+    capistrano_nomad_execute_nomad_command(:job, :revert, options, name, version)
   end
 end
 
 def capistrano_nomad_display_job_history(name, **options)
+  capistrano_nomad_ensure_options!(**options)
+
   capistrano_nomad_capture_nomad_command(:job, :history, options, name)
 end
 
 def capistrano_nomad_display_job_status(name, **options)
+  capistrano_nomad_ensure_options!(**options)
+
   capistrano_nomad_execute_nomad_command(:status, options, name)
 end
 
