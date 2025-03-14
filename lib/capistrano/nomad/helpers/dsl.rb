@@ -59,115 +59,116 @@ def nomad_job(name, attributes = {})
     description_name << name.to_s
 
     namespace(name) do
-      desc "Build #{description_name} job Docker images"
-      task :build do
+      desc("Build #{description_name} job Docker images")
+      task(:build) do
         capistrano_nomad_build_jobs_docker_images([name], namespace: namespace)
       end
 
-      desc "Push #{description_name} job Docker images"
-      task :push do
+      desc("Push #{description_name} job Docker images")
+      task(:push) do
         capistrano_nomad_push_jobs_docker_images([name], namespace: namespace)
       end
 
-      desc "Build and push #{description_name} job Docker images"
-      task :assemble do
+      desc("Build and push #{description_name} job Docker images")
+      task(:assemble) do
         capistrano_nomad_build_jobs_docker_images([name], namespace: namespace)
         capistrano_nomad_push_jobs_docker_images([name], namespace: namespace)
       end
 
-      desc "Upload #{description_name} job and related files"
-      task :upload do
+      desc("Upload #{description_name} job and related files")
+      task(:upload) do
         capistrano_nomad_upload_jobs([name], namespace: namespace)
       end
 
-      desc "Run #{description_name} job"
-      task :run do
+      desc("Run #{description_name} job")
+      task(:run) do
         capistrano_nomad_run_jobs([name], namespace: namespace, is_detached: false)
       end
 
-      desc "Purge and run #{description_name} job again"
-      task :rerun do
+      desc("Purge and run #{description_name} job again")
+      task(:rerun) do
         capistrano_nomad_rerun_jobs([name], namespace: namespace, is_detached: false)
       end
 
-      desc "Upload and plan #{description_name} job"
-      task :upload_plan do
+      desc("Upload and plan #{description_name} job")
+      task(:upload_plan) do
         capistrano_nomad_upload_plan_jobs([name], namespace: namespace)
       end
 
-      desc "Upload and run #{description_name} job"
-      task :upload_run do
+      desc("Upload and run #{description_name} job")
+      task(:upload_run) do
         capistrano_nomad_upload_run_jobs([name], namespace: namespace, is_detached: false)
       end
 
-      desc "Upload and re-run #{description_name} job"
-      task :upload_rerun do
+      desc("Upload and re-run #{description_name} job")
+      task(:upload_rerun) do
         capistrano_nomad_upload_rerun_jobs([name], namespace: namespace, is_detached: false)
       end
 
-      desc "Deploy #{description_name} job"
-      task :deploy do
+      desc("Deploy #{description_name} job")
+      task(:deploy) do
         capistrano_nomad_deploy_jobs([name], namespace: namespace, is_detached: false)
       end
 
-      desc "Stop #{description_name} job"
-      task :stop do
+      desc("Stop #{description_name} job")
+      task(:stop) do
         capistrano_nomad_stop_jobs([name], namespace: namespace)
       end
 
-      desc "Restart #{description_name} job"
-      task :restart do
+      desc("Restart #{description_name} job")
+      task(:restart) do
         capistrano_nomad_restart_jobs([name], namespace: namespace)
       end
 
-      desc "Revert #{description_name} job. Specify version with VERSION. Specify targeting tasks with docker image with DOCKER_IMAGE. If none specified, it will revert to previous version"
-      task :revert do
-        capistrano_nomad_revert_jobs([name], ENV["VERSION"].presence,
+      desc("Revert #{description_name} job. Specify version with VERSION. Specify targeting tasks with docker image with DOCKER_IMAGE. If none specified, it will revert to previous version")
+      task(:revert) do
+        capistrano_nomad_revert_jobs([name],
           namespace: namespace,
+          version: ENV["VERSION"],
           docker_image: ENV["DOCKER_IMAGE"],
         )
       end
 
-      desc "Purge #{description_name} job"
-      task :purge do
+      desc("Purge #{description_name} job")
+      task(:purge) do
         capistrano_nomad_purge_jobs([name], namespace: namespace, is_detached: false)
       end
 
-      desc "Display status of #{description_name} job"
-      task :status do
+      desc("Display status of #{description_name} job")
+      task(:status) do
         capistrano_nomad_display_job_status(name, namespace: namespace)
       end
 
-      desc "Open console to #{description_name} job. Specify task with TASK, command with CMD"
-      task :console do
+      desc("Open console to #{description_name} job. Specify task with TASK, command with CMD")
+      task(:console) do
         command = ENV["CMD"].presence || "/bin/sh"
 
         capistrano_nomad_exec_within_job(name, command, namespace: namespace, task: ENV["TASK"])
       end
 
-      desc "Display stdout and stderr of #{description_name} job. Specify task with TASK"
-      task :logs do
+      desc("Display stdout and stderr of #{description_name} job. Specify task with TASK")
+      task(:logs) do
         capistrano_nomad_tail_job_logs(name, namespace: namespace, stdout: true)
         capistrano_nomad_tail_job_logs(name, namespace: namespace, stderr: true)
       end
 
-      desc "Display stdout of #{description_name} job. Specify task with TASK"
-      task :stdout do
+      desc("Display stdout of #{description_name} job. Specify task with TASK")
+      task(:stdout) do
         capistrano_nomad_tail_job_logs(name, namespace: namespace, stdout: true)
       end
 
-      desc "Display stderr of #{description_name} job. Specify task with TASK"
-      task :stderr do
+      desc("Display stderr of #{description_name} job. Specify task with TASK")
+      task(:stderr) do
         capistrano_nomad_tail_job_logs(name, namespace: namespace, stderr: true)
       end
 
-      desc "Follow logs of #{description_name} job. Specify task with TASK"
-      task :follow do
+      desc("Follow logs of #{description_name} job. Specify task with TASK")
+      task(:follow) do
         capistrano_nomad_display_job_logs(name, namespace: namespace, f: true)
       end
 
-      desc "Open job in web UI"
-      task :ui do
+      desc("Open job in web UI")
+      task(:ui) do
         capistrano_nomad_open_job_ui(name, namespace: namespace)
       end
     end
