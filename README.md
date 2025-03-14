@@ -37,7 +37,7 @@ Within `deploy.rb`
 set :nomad_jobs_path, "nomad/jobs"
 set :nomad_var_files_path, "nomad/vars"
 
-# Determines base URL to use when opening job in web UI 
+# Determines base URL to use when opening job in web UI
 set :nomad_ui_url, "http://localhost:4646"
 
 # Make variables available to all template .erb files
@@ -160,6 +160,14 @@ cap production nomad:app:logs
 cap production nomad:app:stdout
 cap production nomad:app:stderr
 cap production nomad:analytics:grafana:follow
+```
+
+Revert jobs
+
+```shell
+cap production nomad:app:revert
+cap production nomad:app:revert VERSION=4
+cap production nomad:app:revert DOCKER_IMAGE=v1.4.4
 ```
 
 Open job in web UI
