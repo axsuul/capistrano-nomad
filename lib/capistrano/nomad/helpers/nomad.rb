@@ -30,7 +30,7 @@ def capistrano_nomad_ensure_absolute_path(path)
 end
 
 def capistrano_nomad_build_file_path(parent_path, basename, kind: nil, **options)
-  capistrano_nomad_ensure_options!(**options)
+  capistrano_nomad_ensure_options!(options)
   namespace = options[:namespace]
   segments = [parent_path]
 
@@ -135,7 +135,7 @@ def capistrano_nomad_capture_nomad_command(*args, **options)
 end
 
 def capistrano_nomad_find_job_task_details(name, task: nil, **options)
-  capistrano_nomad_ensure_options!(**options)
+  capistrano_nomad_ensure_options!(options)
   task = task.presence || name
 
   # Find alloc id that contains task that is also running
@@ -178,7 +178,7 @@ def capistrano_nomad_find_job_task_details(name, task: nil, **options)
 end
 
 def capistrano_nomad_exec_within_job(name, command, task: nil, **options)
-  capistrano_nomad_ensure_options!(**options)
+  capistrano_nomad_ensure_options!(options)
 
   capistrano_nomad_run_remotely do
     if (task_details = capistrano_nomad_find_job_task_details(name, task: task, **options))
@@ -251,18 +251,18 @@ def capistrano_nomad_upload(local_path:, remote_path:, erb_vars: {})
   end
 end
 
-def capistrano_nomad_ensure_options!(**options)
+def capistrano_nomad_ensure_options!(options)
   options[:namespace] ||= :default
 end
 
 def capistrano_nomad_fetch_namespace_options(**options)
-  capistrano_nomad_ensure_options!(**options)
+  capistrano_nomad_ensure_options!(options)
 
   fetch(:nomad_namespaces)&.dig(options[:namespace])
 end
 
 def capistrano_nomad_fetch_job_options(name, *args, **options)
-  capistrano_nomad_ensure_options!(**options)
+  capistrano_nomad_ensure_options!(options)
 
   fetch(:nomad_jobs).dig(options[:namespace], name.to_sym, *args)
 end
@@ -272,7 +272,7 @@ def capistrano_nomad_fetch_job_var_files(name, **options)
 end
 
 def capistrano_nomad_fetch_jobs_names_by_namespace(**options)
-  capistrano_nomad_ensure_options!(**options)
+  capistrano_nomad_ensure_options!(options)
   namespace = options[:namespace]
 
   # Can pass tags via command line (e.g. TAG=foo or TAGS=foo,bar)
@@ -298,7 +298,7 @@ def capistrano_nomad_fetch_jobs_names_by_namespace(**options)
 end
 
 def capistrano_nomad_fetch_jobs_docker_image_types(names, **options)
-  capistrano_nomad_ensure_options!(**options)
+  capistrano_nomad_ensure_options!(options)
 
   names.map { |n| fetch(:nomad_jobs).dig(options[:namespace], n.to_sym, :docker_image_types) }.flatten.compact.uniq
 end
@@ -459,7 +459,7 @@ def capistrano_nomad_plan_jobs(names, **options)
 end
 
 def capistrano_nomad_run_jobs(names, is_detached: true, **options)
-  capistrano_nomad_ensure_options!(**options)
+  capistrano_nomad_ensure_options!(options)
 
   names.each do |name|
     run_options = {
@@ -521,7 +521,7 @@ def capistrano_nomad_deploy_jobs(names, **options)
 end
 
 def capistrano_nomad_restart_jobs(names, **options)
-  capistrano_nomad_ensure_options!(**options)
+  capistrano_nomad_ensure_options!(options)
 
   names.each do |name|
     # Automatic yes to prompts. If set, the command automatically restarts multi-region jobs only in the region targeted
@@ -531,7 +531,7 @@ def capistrano_nomad_restart_jobs(names, **options)
 end
 
 def capistrano_nomad_stop_jobs(names, **options)
-  capistrano_nomad_ensure_options!(**options)
+  capistrano_nomad_ensure_options!(options)
 
   names.each do |name|
     capistrano_nomad_execute_nomad_command(:job, :stop, options, name)
@@ -539,7 +539,7 @@ def capistrano_nomad_stop_jobs(names, **options)
 end
 
 def capistrano_nomad_purge_jobs(names, is_detached: true, **options)
-  capistrano_nomad_ensure_options!(**options)
+  capistrano_nomad_ensure_options!(options)
 
   names.each do |name|
     capistrano_nomad_execute_nomad_command(:stop, options.reverse_merge(purge: true, detach: is_detached), name)
@@ -547,7 +547,7 @@ def capistrano_nomad_purge_jobs(names, is_detached: true, **options)
 end
 
 def capistrano_nomad_revert_jobs(names, version: nil, docker_image: nil, **options)
-  capistrano_nomad_ensure_options!(**options)
+  capistrano_nomad_ensure_options!(options)
   versions_by_job_name = {}
 
   names.each do |name|
@@ -583,13 +583,13 @@ def capistrano_nomad_revert_jobs(names, version: nil, docker_image: nil, **optio
 end
 
 def capistrano_nomad_display_job_history(name, **options)
-  capistrano_nomad_ensure_options!(**options)
+  capistrano_nomad_ensure_options!(options)
 
   capistrano_nomad_capture_nomad_command(:job, :history, options, name)
 end
 
 def capistrano_nomad_display_job_status(name, **options)
-  capistrano_nomad_ensure_options!(**options)
+  capistrano_nomad_ensure_options!(options)
 
   capistrano_nomad_execute_nomad_command(:status, options, name)
 end
