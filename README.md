@@ -99,7 +99,7 @@ nomad_docker_image_type :restic,
 
 # Jobs
 nomad_job :backend, docker_image_types: [:backend], var_files: [:rails]
-nomad_job :frontend
+nomad_job :frontend, console_command: "/bin/bash"
 nomad_job :postgres, docker_image_types: [:postgres]
 nomad_job :redis, docker_image_types: [:redis], tags: [:redis]
 nomad_job :"traefik-default", template: :admin,
@@ -150,7 +150,7 @@ Open console
 ```shell
 cap production nomad:app:console
 cap production nomad:app:console TASK=custom-task-name
-cap production nomad:analytics:grafana:console
+cap production nomad:analytics:grafana:console CMD=/bin/bash
 ```
 
 Display logs
