@@ -1,5 +1,9 @@
 ## [Unreleased]
 
+## [0.13.1]
+
+- Support for starting jobs (e.g. `cap production nomad:app:start`)
+
 ## [0.13.0]
 
 - Support for `NOMAD_TOKEN` environment variable authentication via `:nomad_token` configuration option
