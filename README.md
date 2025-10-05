@@ -131,6 +131,7 @@ cap production nomad:analytics:grafana:deploy
 Manage jobs
 
 ```shell
+cap production nomad:app:start
 cap production nomad:app:stop
 cap production nomad:redis:purge
 cap production nomad:analytics:grafana:restart

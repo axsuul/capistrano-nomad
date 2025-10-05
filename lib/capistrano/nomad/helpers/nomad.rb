@@ -384,6 +384,13 @@ def capistrano_nomad_define_group_tasks(namespace:)
       end
     end
 
+    desc("Start #{nomad_namespace} jobs")
+    task(:start) do
+      capistrano_nomad_fetch_jobs_names_by_namespace(namespace: nomad_namespace).each do |jobs_namespace, names|
+        capistrano_nomad_start_jobs(names, namespace: jobs_namespace)
+      end
+    end
+
     desc("Stop #{nomad_namespace} jobs")
     task(:stop) do
       capistrano_nomad_fetch_jobs_names_by_namespace(namespace: nomad_namespace).each do |jobs_namespace, names|
@@ -536,6 +543,14 @@ def capistrano_nomad_restart_jobs(names, **options)
     # Automatic yes to prompts. If set, the command automatically restarts multi-region jobs only in the region targeted
     # by the command, ignores batch errors, and automatically proceeds with the remaining batches without waiting
     capistrano_nomad_execute_nomad_command(:job, :restart, options.reverse_merge(yes: true), name)
+  end
+end
+
+def capistrano_nomad_start_jobs(names, **options)
+  capistrano_nomad_ensure_options!(options)
+
+  names.each do |name|
+    capistrano_nomad_execute_nomad_command(:job, :start, options, name)
   end
 end
 
