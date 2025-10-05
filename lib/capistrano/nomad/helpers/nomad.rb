@@ -112,8 +112,17 @@ def capistrano_nomad_run_nomad_command(kind, *args)
     end
   end
 
-  # Ignore errors
-  public_send(kind, :nomad, *converted_args, raise_on_non_zero_exit: false)
+  env_vars = {}
+
+  # Pass Nomad token as environment variable if set
+  if (nomad_token = fetch(:nomad_token))
+    env_vars[:nomad_token] = nomad_token
+  end
+
+  with(env_vars) do
+    # Ignore errors
+    public_send(kind, :nomad, *converted_args, raise_on_non_zero_exit: false)
+  end
 end
 
 def capistrano_nomad_execute_nomad_command(*args, **options)

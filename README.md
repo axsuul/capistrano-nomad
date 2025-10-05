@@ -37,6 +37,9 @@ Within `deploy.rb`
 set :nomad_jobs_path, "nomad/jobs"
 set :nomad_var_files_path, "nomad/vars"
 
+# Set token
+set :nomad_token, "abc123"
+
 # Determines base URL to use when opening job in web UI
 set :nomad_ui_url, "http://localhost:4646"
 
@@ -180,6 +183,12 @@ Create missing and delete unused namespaces
 
 ```shell
 cap production nomad:modify_namespaces
+```
+
+Show version
+
+```shell
+cap production nomad:version
 ```
 
 ## Development
