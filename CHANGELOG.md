@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+## [0.14.0]
+
 - `nomad:deploy` properly deploys all jobs across all namespaces now
 
 ## [0.13.3]

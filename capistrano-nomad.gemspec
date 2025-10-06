@@ -2,7 +2,7 @@
 
 Gem::Specification.new do |spec|
   spec.name = "capistrano-nomad"
-  spec.version = "0.13.3"
+  spec.version = "0.14.0"
   spec.authors = ["James Hu"]
 
   spec.summary = "Capistrano plugin for deploying and managing Nomad jobs"
