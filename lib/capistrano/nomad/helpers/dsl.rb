@@ -110,6 +110,11 @@ def nomad_job(name, attributes = {})
         capistrano_nomad_deploy_jobs([name], namespace: namespace, is_detached: false)
       end
 
+      desc("Start #{description_name} job")
+      task(:start) do
+        capistrano_nomad_start_jobs([name], namespace: namespace)
+      end
+
       desc("Stop #{description_name} job")
       task(:stop) do
         capistrano_nomad_stop_jobs([name], namespace: namespace)
