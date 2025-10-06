@@ -261,7 +261,7 @@ def capistrano_nomad_upload(local_path:, remote_path:, erb_vars: {})
 end
 
 def capistrano_nomad_ensure_options!(options)
-  options[:namespace] ||= :default
+  options[:namespace] = :default unless options.key?(:namespace)
 end
 
 def capistrano_nomad_fetch_namespace_options(**options)

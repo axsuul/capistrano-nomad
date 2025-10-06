@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+- `nomad:deploy` properly deploys all jobs across all namespaces now
+
 ## [0.13.3]
 
 - Support for namespace-level `erb_vars` that are passed to all jobs within that namespace
