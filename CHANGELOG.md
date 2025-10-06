@@ -1,5 +1,9 @@
 ## [Unreleased]
 
+## [0.13.2]
+
+- Add missing start job task
+
 ## [0.13.1]
 
 - Support for starting jobs (e.g. `cap production nomad:app:start`)
