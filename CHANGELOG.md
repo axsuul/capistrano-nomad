@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+- Support for namespace-level `erb_vars` that are passed to all jobs within that namespace
+
 ## [0.13.2]
 
 - Add missing start job task

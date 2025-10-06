@@ -43,9 +43,15 @@ def nomad_job(name, attributes = {})
 
   attributes[:tags] ||= []
 
-  # Tags added to namespace should be added to all jobs within
   if (nomad_namespace_options = capistrano_nomad_fetch_namespace_options(namespace: @nomad_namespace))
+    # Tags added to namespace should be added to all jobs within
     attributes[:tags] += nomad_namespace_options[:tags] || []
+
+    # ERB vars added to namespace should be added to all jobs within
+    if (namespace_erb_vars = nomad_namespace_options[:erb_vars])
+      attributes[:erb_vars] ||= {}
+      attributes[:erb_vars].reverse_merge!(namespace_erb_vars)
+    end
   end
 
   nomad_jobs = fetch(:nomad_jobs) || Hash.new { |h, n| h[n] = {} }

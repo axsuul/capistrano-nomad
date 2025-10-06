@@ -112,7 +112,7 @@ nomad_job :"traefik-secondary", template: :admin,
   erb_vars: { role: :secondary },
   tags: [:traefik]
 
-nomad_namespace :analytics, tags: [:admin] do
+nomad_namespace :analytics, tags: [:admin], erb_vars: { role: :default } do
   nomad_job :grafana
 end
 
