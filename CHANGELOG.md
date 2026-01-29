@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+## [0.14.1]
+
 - Support for `IS_DETACHED` environment variable to run jobs in detached mode (e.g. `IS_DETACHED=true cap production nomad:app:deploy`)
 
 ## [0.14.0]
