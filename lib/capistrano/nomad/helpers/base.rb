@@ -9,3 +9,7 @@ end
 def capistrano_nomad_run_remotely(&block)
   on(roles(:manager), &block)
 end
+
+def capistrano_nomad_job_detached_overridden?
+  ENV["IS_DETACHED"]&.downcase == "true"
+end

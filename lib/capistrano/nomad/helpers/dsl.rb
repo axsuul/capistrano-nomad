@@ -88,12 +88,12 @@ def nomad_job(name, attributes = {})
 
       desc("Run #{description_name} job")
       task(:run) do
-        capistrano_nomad_run_jobs([name], namespace: namespace, is_detached: false)
+        capistrano_nomad_run_jobs([name], namespace: namespace, is_detached: capistrano_nomad_job_detached_overridden?)
       end
 
       desc("Purge and run #{description_name} job again")
       task(:rerun) do
-        capistrano_nomad_rerun_jobs([name], namespace: namespace, is_detached: false)
+        capistrano_nomad_rerun_jobs([name], namespace: namespace, is_detached: capistrano_nomad_job_detached_overridden?)
       end
 
       desc("Upload and plan #{description_name} job")
@@ -103,17 +103,17 @@ def nomad_job(name, attributes = {})
 
       desc("Upload and run #{description_name} job")
       task(:upload_run) do
-        capistrano_nomad_upload_run_jobs([name], namespace: namespace, is_detached: false)
+        capistrano_nomad_upload_run_jobs([name], namespace: namespace, is_detached: capistrano_nomad_job_detached_overridden?)
       end
 
       desc("Upload and re-run #{description_name} job")
       task(:upload_rerun) do
-        capistrano_nomad_upload_rerun_jobs([name], namespace: namespace, is_detached: false)
+        capistrano_nomad_upload_rerun_jobs([name], namespace: namespace, is_detached: capistrano_nomad_job_detached_overridden?)
       end
 
       desc("Deploy #{description_name} job")
       task(:deploy) do
-        capistrano_nomad_deploy_jobs([name], namespace: namespace, is_detached: false)
+        capistrano_nomad_deploy_jobs([name], namespace: namespace, is_detached: capistrano_nomad_job_detached_overridden?)
       end
 
       desc("Start #{description_name} job")
@@ -142,7 +142,7 @@ def nomad_job(name, attributes = {})
 
       desc("Purge #{description_name} job")
       task(:purge) do
-        capistrano_nomad_purge_jobs([name], namespace: namespace, is_detached: false)
+        capistrano_nomad_purge_jobs([name], namespace: namespace, is_detached: capistrano_nomad_job_detached_overridden?)
       end
 
       desc("Display status of #{description_name} job")

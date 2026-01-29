@@ -174,6 +174,14 @@ cap production nomad:app:revert VERSION=4
 cap production nomad:app:revert DOCKER_IMAGE=v1.4.4
 ```
 
+Run jobs in detached mode (fire and forget)
+
+```shell
+IS_DETACHED=true cap production nomad:app:deploy
+IS_DETACHED=true cap production nomad:app:run
+IS_DETACHED=true cap production nomad:analytics:grafana:upload_run
+```
+
 Open job in web UI
 
 ```shell
