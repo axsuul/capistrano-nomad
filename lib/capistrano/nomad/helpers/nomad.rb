@@ -29,6 +29,36 @@ def capistrano_nomad_ensure_absolute_path(path)
   path[0] == "/" ? path : "/#{path}"
 end
 
+# Escapes a command string for use with sshkit-interactive.
+#
+# sshkit-interactive wraps commands in '$SHELL -l -c "..."' and naively
+# replaces all single quotes with \". This breaks commands that have
+# content inside single quotes (e.g., bin/rails runner 'puts "hello"').
+#
+# This function pre-processes the command to handle single-quoted sections
+# properly by:
+# 1. Converting single quotes to escaped double quotes (\")
+# 2. Escaping content inside those sections for double-quote context
+#    (backslashes become \\, double quotes become \\\")
+#
+# After this transformation, sshkit-interactive's gsub("'", '\\"') becomes
+# a no-op since there are no single quotes left.
+def capistrano_nomad_escape_command(command)
+  # Process single-quoted sections: 'content' -> \"escaped_content\"
+  command.gsub(/'([^']*)'/) do |_match|
+    content = Regexp.last_match(1)
+
+    # Escape for double-quote shell context:
+    # - Backslashes need to be doubled (\ -> \\)
+    # - Double quotes need to become \\\" to survive shell parsing
+    escaped_content = content
+      .gsub("\\", "\\\\\\\\")
+      .gsub('"', '\\\\\\\\\\\"')
+
+    '\"' + escaped_content + '\"'
+  end
+end
+
 def capistrano_nomad_build_file_path(parent_path, basename, kind: nil, **options)
   capistrano_nomad_ensure_options!(options)
   namespace = options[:namespace]
@@ -189,6 +219,9 @@ end
 def capistrano_nomad_exec_within_job(name, command, task: nil, **options)
   capistrano_nomad_ensure_options!(options)
 
+  # Escape command for SSH transport via sshkit-interactive
+  escaped_command = capistrano_nomad_escape_command(command)
+
   capistrano_nomad_run_remotely do
     if (task_details = capistrano_nomad_find_job_task_details(name, task: task, **options))
       capistrano_nomad_execute_nomad_command(
@@ -196,7 +229,7 @@ def capistrano_nomad_exec_within_job(name, command, task: nil, **options)
         :exec,
         options.merge(task: task_details[:name]),
         task_details[:alloc_id],
-        command,
+        escaped_command,
       )
     else
       # If alloc can't be determined then choose at random
@@ -205,7 +238,7 @@ def capistrano_nomad_exec_within_job(name, command, task: nil, **options)
         :exec,
         options.merge(job: true),
         task,
-        command,
+        escaped_command,
       )
     end
   end
