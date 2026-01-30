@@ -1,4 +1,5 @@
 require "active_support/core_ext/string"
+require "base64"
 require "sshkit/interactive"
 
 class CapistranoNomadErbNamespace
@@ -57,6 +58,18 @@ def capistrano_nomad_escape_command(command)
 
     '\"' + escaped_content + '\"'
   end
+end
+
+# Escapes a command string for use with sshkit-interactive by base64 encoding.
+#
+# sshkit-interactive wraps commands in '$SHELL -l -c "..."' and naively
+# replaces all single quotes with \". Base64 avoids all quoting issues by
+# decoding the command inside the Nomad task and executing it with /bin/sh.
+def capistrano_nomad_escape_command(command)
+  encoded_command = Base64.strict_encode64(command)
+  decoded_command = "printf\\ %s\\ #{encoded_command}\\ \\|\\ base64\\ -d\\ \\|\\ /bin/sh"
+
+  "/bin/sh -lc #{decoded_command}"
 end
 
 def capistrano_nomad_build_file_path(parent_path, basename, kind: nil, **options)
