@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+## [0.15.0]
+
 - Fix command escaping for console task to support complex commands with special characters using base64 encoding
 
 ## [0.14.1]
