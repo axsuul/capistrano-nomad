@@ -1,5 +1,9 @@
 ## [Unreleased]
 
+## [0.15.1]
+
+- Fix console task to preserve TTY interactivity by using eval instead of piping into /bin/sh
+
 ## [0.15.0]
 
 - Fix command escaping for console task to support complex commands with special characters using base64 encoding
