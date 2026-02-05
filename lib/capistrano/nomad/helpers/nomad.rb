@@ -64,10 +64,12 @@ end
 #
 # sshkit-interactive wraps commands in '$SHELL -l -c "..."' and naively
 # replaces all single quotes with \". Base64 avoids all quoting issues by
-# decoding the command inside the Nomad task and executing it with /bin/sh.
+# decoding the command at runtime. Uses eval instead of piping into /bin/sh
+# so that stdin remains connected to the TTY, preserving interactivity for
+# commands like /bin/sh or bin/rails console.
 def capistrano_nomad_escape_command(command)
   encoded_command = Base64.strict_encode64(command)
-  decoded_command = "printf\\ %s\\ #{encoded_command}\\ \\|\\ base64\\ -d\\ \\|\\ /bin/sh"
+  decoded_command = "eval\\ \\$\\(printf\\ %s\\ #{encoded_command}\\ \\|\\ base64\\ -d\\)"
 
   "/bin/sh -lc #{decoded_command}"
 end
