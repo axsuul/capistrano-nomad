@@ -1,5 +1,10 @@
 ## [Unreleased]
 
+## [0.16.0]
+
+- Add `:redeploy` task that stops job before performing a full deploy to ensure fresh allocations
+- Add `:agent_info` task for efficient command execution in containers via SSH + Nomad exec
+
 ## [0.15.1]
 
 - Fix console task to preserve TTY interactivity by using eval instead of piping into /bin/sh

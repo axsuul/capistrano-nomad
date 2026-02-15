@@ -2,7 +2,7 @@
 
 Gem::Specification.new do |spec|
   spec.name = "capistrano-nomad"
-  spec.version = "0.15.1"
+  spec.version = "0.16.0"
   spec.authors = ["James Hu"]
 
   spec.summary = "Capistrano plugin for deploying and managing Nomad jobs"
@@ -15,8 +15,7 @@ Gem::Specification.new do |spec|
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = "https://github.com/axsuul/capistrano-nomad"
 
-  # Specify which files should be added to the gem when it is released.
-  # The `git ls-files -z` loads the files in the RubyGem that have been added into git.
+  # Specify which files should be added to the gem when it is released. The `git ls-files -z` loads the files in the RubyGem that have been added into git.
   spec.files = Dir.chdir(File.expand_path(__dir__)) do
     %x(git ls-files -z).split("\x0").reject do |f|
       (f == __FILE__) || f.match(%r{\A(?:(?:bin|test|spec|features)/|\.(?:git|travis|circleci)|appveyor)})
@@ -35,6 +34,5 @@ Gem::Specification.new do |spec|
   spec.add_dependency("sshkit")
   spec.add_dependency("sshkit-interactive")
 
-  # For more information and examples about making a new gem, check out our
-  # guide at: https://bundler.io/guides/creating_gem.html
+  # For more information and examples about making a new gem, check out our guide at: https://bundler.io/guides/creating_gem.html
 end
