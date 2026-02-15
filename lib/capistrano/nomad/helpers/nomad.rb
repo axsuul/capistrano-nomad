@@ -411,6 +411,13 @@ def capistrano_nomad_define_group_tasks(namespace:)
       end
     end
 
+    desc("Redeploy #{nomad_namespace} jobs")
+    task(:redeploy) do
+      capistrano_nomad_fetch_jobs_names_by_namespace(namespace: nomad_namespace).each do |jobs_namespace, names|
+        capistrano_nomad_redeploy_jobs(names, namespace: jobs_namespace)
+      end
+    end
+
     desc("Rerun #{nomad_namespace} jobs")
     task(:rerun) do
       capistrano_nomad_fetch_jobs_names_by_namespace(namespace: nomad_namespace).each do |jobs_namespace, names|
@@ -582,6 +589,14 @@ def capistrano_nomad_deploy_jobs(names, **options)
 
   capistrano_nomad_assemble_jobs_docker_images(names, **general_options)
   capistrano_nomad_upload_run_jobs(names, **general_options.merge(options))
+end
+
+# Stop job and deploy again with fresh allocations
+def capistrano_nomad_redeploy_jobs(names, **options)
+  general_options = options.slice!(:is_detached)
+
+  capistrano_nomad_stop_jobs(names, **general_options)
+  capistrano_nomad_deploy_jobs(names, **general_options.merge(options))
 end
 
 def capistrano_nomad_restart_jobs(names, **options)

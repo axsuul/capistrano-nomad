@@ -116,6 +116,11 @@ def nomad_job(name, attributes = {})
         capistrano_nomad_deploy_jobs([name], namespace: namespace, is_detached: capistrano_nomad_job_detached_overridden?)
       end
 
+      desc("Redeploy #{description_name} job")
+      task(:redeploy) do
+        capistrano_nomad_redeploy_jobs([name], namespace: namespace, is_detached: capistrano_nomad_job_detached_overridden?)
+      end
+
       desc("Start #{description_name} job")
       task(:start) do
         capistrano_nomad_start_jobs([name], namespace: namespace)

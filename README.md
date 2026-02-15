@@ -128,6 +128,13 @@ cap production nomad:app:deploy
 cap production nomad:analytics:grafana:deploy
 ```
 
+Redeploy individual jobs (stop + deploy with fresh allocations)
+
+```shell
+cap production nomad:app:redeploy
+cap production nomad:analytics:grafana:redeploy
+```
+
 Manage jobs
 
 ```shell
@@ -142,6 +149,7 @@ Tasks can apply across all namespaces or be filtered by namespaces or tags
 
 ```shell
 cap production nomad:analytics:deploy
+cap production nomad:analytics:redeploy
 cap production nomad:analytics:upload_run
 cap production nomad:deploy
 cap production nomad:deploy TAG=admin
@@ -178,6 +186,7 @@ Run jobs in detached mode (fire and forget)
 
 ```shell
 IS_DETACHED=true cap production nomad:app:deploy
+IS_DETACHED=true cap production nomad:app:redeploy
 IS_DETACHED=true cap production nomad:app:run
 IS_DETACHED=true cap production nomad:analytics:grafana:upload_run
 ```
