@@ -150,6 +150,46 @@ def nomad_job(name, attributes = {})
         capistrano_nomad_display_job_status(name, namespace: namespace)
       end
 
+      desc("Display connection info for #{description_name} job as JSON for agent use. Specify task with TASK")
+      task(:agent_info) do
+        info = {}
+
+        capistrano_nomad_run_remotely do |host|
+          task_details = capistrano_nomad_find_job_task_details(name, task: ENV["TASK"], namespace: namespace)
+
+          unless task_details
+            $stderr.puts("No running allocation found")
+            next
+          end
+
+          # Build SSH command prefix using same source of truth as sshkit-interactive
+          netssh = host.netssh_options || {}
+          ssh_args = ["ssh"]
+          ssh_args << "-A" if netssh[:forward_agent]
+          ssh_args << "-p #{netssh[:port]}" if netssh[:port]
+          ssh_args << "-l #{host.user}" if host.user
+          ssh_args << %(-o "ProxyCommand #{netssh[:proxy].command_line_template}") if netssh[:proxy]
+          ssh_args << %(-o "HostName #{netssh[:host_name]}") if netssh[:host_name]
+          Array(netssh[:keys]).each { |key| ssh_args << "-i #{key}" }
+          Array(netssh[:auth_methods]).tap { |m| ssh_args << %(-o "PreferredAuthentications #{m.join(",")}") if m.any? }
+          ssh_args << host.hostname
+          info[:ssh_command] = ssh_args.join(" ")
+
+          # Build nomad alloc exec command prefix (non-interactive: no PTY, stdin open)
+          exec_parts = []
+          if (nomad_token = fetch(:nomad_token))
+            exec_parts << "NOMAD_TOKEN=#{nomad_token}"
+          end
+          exec_parts << "nomad alloc exec -i=true -t=false"
+          exec_parts << "-task=#{task_details[:name]}"
+          exec_parts << "-namespace=#{namespace}" if namespace && namespace != :default
+          exec_parts << task_details[:alloc_id]
+          info[:exec_command] = exec_parts.join(" ")
+        end
+
+        $stdout.puts(info.to_json) if info[:ssh_command]
+      end
+
       desc("Open console to #{description_name} job. Specify task with TASK, command with CMD")
       task(:console) do
         job_options = capistrano_nomad_fetch_job_options(name, namespace: namespace)
