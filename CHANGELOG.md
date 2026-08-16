@@ -1,5 +1,9 @@
 ## [Unreleased]
 
+## [0.16.1]
+
+- Pass every configured variable file to `nomad plan` and `nomad run`
+
 ## [0.16.0]
 
 - Add `:redeploy` task that stops job before performing a full deploy to ensure fresh allocations
