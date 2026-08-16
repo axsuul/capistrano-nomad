@@ -328,6 +328,15 @@ def capistrano_nomad_fetch_job_var_files(name, **options)
   capistrano_nomad_fetch_job_options(name, :var_files, **options) || []
 end
 
+# Build one command option per configured variable file so Nomad receives every file in order
+def capistrano_nomad_build_job_var_file_options(name, **options)
+  capistrano_nomad_fetch_job_var_files(name, **options).map do |var_file|
+    {
+      var_file: capistrano_nomad_build_release_var_file_path(var_file, **options),
+    }
+  end
+end
+
 def capistrano_nomad_fetch_jobs_names_by_namespace(**options)
   capistrano_nomad_ensure_options!(options)
   namespace = options[:namespace]
@@ -521,14 +530,19 @@ def capistrano_nomad_upload_jobs(names, **options)
   end
 end
 
+# Plan each job with every configured variable file before the uploaded job path
 def capistrano_nomad_plan_jobs(names, **options)
   names.each do |name|
-    args = [capistrano_nomad_build_release_job_path(name, **options)]
+    args = [
+      *capistrano_nomad_build_job_var_file_options(name, **options),
+      capistrano_nomad_build_release_job_path(name, **options),
+    ]
 
     capistrano_nomad_execute_nomad_command(:plan, *args)
   end
 end
 
+# Run each job with all configured variable files while preserving the existing command options
 def capistrano_nomad_run_jobs(names, is_detached: true, **options)
   capistrano_nomad_ensure_options!(options)
 
@@ -541,13 +555,10 @@ def capistrano_nomad_run_jobs(names, is_detached: true, **options)
       preserve_counts: true,
     }
 
-    capistrano_nomad_fetch_job_var_files(name, **options).each do |var_file|
-      run_options[:var_file] = capistrano_nomad_build_release_var_file_path(var_file, **options)
-    end
-
     capistrano_nomad_execute_nomad_command(
       :run,
       run_options,
+      *capistrano_nomad_build_job_var_file_options(name, **options),
       capistrano_nomad_build_release_job_path(name, **options),
     )
   end
