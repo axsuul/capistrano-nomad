@@ -138,6 +138,10 @@ def capistrano_nomad_build_release_var_file_path(name, **options)
   "#{release_path}#{capistrano_nomad_ensure_absolute_path(capistrano_nomad_build_base_var_file_path(name, **options))}"
 end
 
+def capistrano_nomad_plan_command?(args)
+  args.first.to_s == "plan" || args.take(2).map(&:to_s) == ["job", "plan"]
+end
+
 def capistrano_nomad_run_nomad_command(kind, *args)
   converted_args = args.each_with_object([]) do |arg, collection|
     # If hash then convert it as options
@@ -165,15 +169,25 @@ def capistrano_nomad_run_nomad_command(kind, *args)
   end
 
   with(env_vars) do
-    # Ignore errors
-    public_send(kind, :nomad, *converted_args, raise_on_non_zero_exit: false)
+    if capistrano_nomad_plan_command?(args)
+      # Nomad returns 1 for a successful plan with changes; all other nonzero exits are errors
+      public_send(kind, :nomad, *converted_args, '; status=$?; if [ "$status" -eq 1 ]; then exit 0; else exit "$status"; fi', raise_on_non_zero_exit: true)
+    else
+      # Ignore errors for commands other than plans
+      public_send(kind, :nomad, *converted_args, raise_on_non_zero_exit: false)
+    end
   end
 end
 
 def capistrano_nomad_execute_nomad_command(*args, **options)
   capistrano_nomad_run_remotely do |host|
-    run_interactively(host) do
+    if capistrano_nomad_plan_command?(args)
+      # Use SSHKit's checked execution because the interactive backend does not raise on failure
       capistrano_nomad_run_nomad_command(:execute, *args, **options)
+    else
+      run_interactively(host) do
+        capistrano_nomad_run_nomad_command(:execute, *args, **options)
+      end
     end
   end
 end

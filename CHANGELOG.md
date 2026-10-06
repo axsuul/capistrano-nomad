@@ -1,5 +1,11 @@
 ## [Unreleased]
 
+## [0.16.2]
+
+- Fail `upload_plan` and other plan operations when Nomad rejects a job or cannot determine the plan
+- Keep successful plans with allocation changes successful despite Nomad's exit code 1
+- Include CLI regression tests in the gem
+
 ## [0.16.1]
 
 - Pass every configured variable file to `nomad plan` and `nomad run`

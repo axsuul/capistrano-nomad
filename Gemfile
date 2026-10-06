@@ -4,3 +4,5 @@ source "https://rubygems.org"
 
 # Specify your gem's dependencies in capistrano-nomad.gemspec
 gemspec
+
+gem "minitest", "~> 5.0"
