@@ -213,7 +213,9 @@ cap production nomad:version
 
 After checking out the repo, run `bin/setup` to install dependencies. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
 
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and the created tag, and push the `.gem` file to [rubygems.org](https://rubygems.org).
+Run `bundle exec rake test` to test the generated Capistrano `upload_plan` task through the CLI. The tests use local transport and controlled Nomad exit codes. To also check rejection of invalid HCL with a real Nomad binary, run `NOMAD_REAL_BINARY=/path/to/nomad bundle exec rake test`.
+
+To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version in `capistrano-nomad.gemspec`, run `bundle install`, and update `CHANGELOG.md`. Run `bundle exec rake test` and commit the release changes. Then run `bundle exec rake release`, which creates the version tag, pushes the release commit and tag, and publishes the gem to [RubyGems](https://rubygems.org).
 
 ## Contributing
 

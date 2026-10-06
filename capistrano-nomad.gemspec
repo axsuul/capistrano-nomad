@@ -2,7 +2,7 @@
 
 Gem::Specification.new do |spec|
   spec.name = "capistrano-nomad"
-  spec.version = "0.16.1"
+  spec.version = "0.16.2"
   spec.authors = ["James Hu"]
 
   spec.summary = "Capistrano plugin for deploying and managing Nomad jobs"
@@ -18,7 +18,7 @@ Gem::Specification.new do |spec|
   # Specify which files should be added to the gem when it is released. The `git ls-files -z` loads the files in the RubyGem that have been added into git.
   spec.files = Dir.chdir(File.expand_path(__dir__)) do
     %x(git ls-files -z).split("\x0").reject do |f|
-      (f == __FILE__) || f.match(%r{\A(?:(?:bin|test|spec|features)/|\.(?:git|travis|circleci)|appveyor)})
+      (f == __FILE__) || f.match(%r{\A(?:(?:bin|spec|features)/|\.(?:git|travis|circleci)|appveyor)})
     end
   end
   spec.bindir = "exe"
