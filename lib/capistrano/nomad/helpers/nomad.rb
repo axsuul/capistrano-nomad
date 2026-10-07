@@ -142,7 +142,7 @@ def capistrano_nomad_plan_command?(args)
   args.first.to_s == "plan" || args.take(2).map(&:to_s) == ["job", "plan"]
 end
 
-def capistrano_nomad_run_nomad_command(kind, *args)
+def capistrano_nomad_run_nomad_command(kind, *args, raise_on_non_zero_exit: false)
   converted_args = args.each_with_object([]) do |arg, collection|
     # If hash then convert it as options
     if arg.is_a?(Hash)
@@ -173,30 +173,30 @@ def capistrano_nomad_run_nomad_command(kind, *args)
       # Nomad returns 1 for a successful plan with changes; all other nonzero exits are errors
       public_send(kind, :nomad, *converted_args, '; status=$?; if [ "$status" -eq 1 ]; then exit 0; else exit "$status"; fi', raise_on_non_zero_exit: true)
     else
-      # Ignore errors for commands other than plans
-      public_send(kind, :nomad, *converted_args, raise_on_non_zero_exit: false)
+      # Preserve unchecked execution unless the caller requires failures to propagate
+      public_send(kind, :nomad, *converted_args, raise_on_non_zero_exit: raise_on_non_zero_exit)
     end
   end
 end
 
-def capistrano_nomad_execute_nomad_command(*args, **options)
+def capistrano_nomad_execute_nomad_command(*args, raise_on_non_zero_exit: false, **options)
   capistrano_nomad_run_remotely do |host|
-    if capistrano_nomad_plan_command?(args)
-      # Use SSHKit's checked execution because the interactive backend does not raise on failure
-      capistrano_nomad_run_nomad_command(:execute, *args, **options)
+    if capistrano_nomad_plan_command?(args) || raise_on_non_zero_exit
+      # Use checked execution when failures must propagate because the interactive backend does not raise
+      capistrano_nomad_run_nomad_command(:execute, *args, options, raise_on_non_zero_exit: raise_on_non_zero_exit)
     else
       run_interactively(host) do
-        capistrano_nomad_run_nomad_command(:execute, *args, **options)
+        capistrano_nomad_run_nomad_command(:execute, *args, options)
       end
     end
   end
 end
 
-def capistrano_nomad_capture_nomad_command(*args, **options)
+def capistrano_nomad_capture_nomad_command(*args, raise_on_non_zero_exit: false, **options)
   output = nil
 
   capistrano_nomad_run_remotely do
-    output = capistrano_nomad_run_nomad_command(:capture, *args, **options)
+    output = capistrano_nomad_run_nomad_command(:capture, *args, options, raise_on_non_zero_exit: raise_on_non_zero_exit)
   end
 
   output
@@ -632,6 +632,17 @@ def capistrano_nomad_restart_jobs(names, **options)
     # by the command, ignores batch errors, and automatically proceeds with the remaining batches without waiting
     capistrano_nomad_execute_nomad_command(:job, :restart, options.reverse_merge(yes: true), name)
   end
+end
+
+def capistrano_nomad_force_job(name, **options)
+  capistrano_nomad_ensure_options!(options)
+  job = JSON.parse(capistrano_nomad_capture_nomad_command(:job, :inspect, options, name, raise_on_non_zero_exit: true))
+
+  unless job.dig("Periodic", "Enabled")
+    raise ArgumentError, "Job #{options[:namespace]}/#{name} is not an enabled periodic job"
+  end
+
+  capistrano_nomad_execute_nomad_command(:job, :periodic, :force, options, name, raise_on_non_zero_exit: true)
 end
 
 def capistrano_nomad_start_jobs(names, **options)

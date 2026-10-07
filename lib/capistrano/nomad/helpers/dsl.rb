@@ -91,6 +91,11 @@ def nomad_job(name, attributes = {})
         capistrano_nomad_run_jobs([name], namespace: namespace, is_detached: capistrano_nomad_job_detached_overridden?)
       end
 
+      desc("Force a new periodic child of #{description_name} job")
+      task(:force) do
+        capistrano_nomad_force_job(name, namespace: namespace)
+      end
+
       desc("Purge and run #{description_name} job again")
       task(:rerun) do
         capistrano_nomad_rerun_jobs([name], namespace: namespace, is_detached: capistrano_nomad_job_detached_overridden?)

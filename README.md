@@ -145,6 +145,15 @@ cap production nomad:analytics:grafana:restart
 cap production nomad:postgres:status
 ```
 
+Force a periodic job without uploading, deploying, or restarting its parent:
+
+```shell
+cap production nomad:maintenance:force
+cap production nomad:analytics:archive:force
+```
+
+The per-job `:force` task checks the deployed job before running `nomad job periodic force`. Non-periodic and disabled periodic jobs fail with a clear error. Inspection and force failures produce a nonzero Capistrano exit. The task uses the configured manager host and `:nomad_token`, like other job actions.
+
 Tasks can apply across all namespaces or be filtered by namespaces or tags
 
 ```shell
@@ -213,7 +222,7 @@ cap production nomad:version
 
 After checking out the repo, run `bin/setup` to install dependencies. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
 
-Run `bundle exec rake test` to test the generated Capistrano `upload_plan` task through the CLI. The tests use local transport and controlled Nomad exit codes. To also check rejection of invalid HCL with a real Nomad binary, run `NOMAD_REAL_BINARY=/path/to/nomad bundle exec rake test`.
+Run `bundle exec rake test` to test the generated Capistrano `upload_plan` and `force` tasks through the CLI. The tests use local transport and controlled Nomad exit codes. Force coverage checks the job, namespace, token, rejected requests, and non-periodic jobs. To also check rejection of invalid HCL with a real Nomad binary, run `NOMAD_REAL_BINARY=/path/to/nomad bundle exec rake test`.
 
 To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version in `capistrano-nomad.gemspec`, run `bundle install`, and update `CHANGELOG.md`. Run `bundle exec rake test` and commit the release changes. Then run `bundle exec rake release`, which creates the version tag, pushes the release commit and tag, and publishes the gem to [RubyGems](https://rubygems.org).
 

@@ -1,5 +1,11 @@
 ## [Unreleased]
 
+## [0.16.3]
+
+- Add a generated `:force` task to launch a periodic child through the configured manager host and Nomad token
+- Reject non-periodic and disabled periodic jobs before submitting a force request
+- Fail the Capistrano command when job inspection or periodic force fails
+
 ## [0.16.2]
 
 - Fail `upload_plan` and other plan operations when Nomad rejects a job or cannot determine the plan
