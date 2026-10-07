@@ -44,6 +44,10 @@ class UploadPlanTest < Minitest::Test
           [ "$NOMAD_TOKEN" = force-test-token ] || exit 98
           printf '%s\n' "$*" >> #{root}/commands
           if [ "$2" = inspect ]; then
+            case "$*" in
+              *-json*) ;;
+              *) echo '{"Job":{}}'; exit 0;;
+            esac
             printf '%s\n' "$NOMAD_TEST_JOB"
             exit "${NOMAD_TEST_INSPECT_EXIT:-0}"
           fi
@@ -92,7 +96,7 @@ class UploadPlanTest < Minitest::Test
           chdir: root,
         )
 
-        assert_equal("job inspect -namespace=spleencheese myanonamouse-maintenance\njob periodic force -namespace=spleencheese myanonamouse-maintenance\n", File.read("#{root}/commands"), output)
+        assert_equal("job inspect -namespace=spleencheese -json myanonamouse-maintenance\njob periodic force -namespace=spleencheese myanonamouse-maintenance\n", File.read("#{root}/commands"), output)
         assert_equal(exit_code.zero?, status.success?, output)
         assert_includes(output, exit_code.zero? ? "Created periodic child" : "Periodic force rejected")
       end
@@ -107,7 +111,7 @@ class UploadPlanTest < Minitest::Test
 
         refute(status.success?, output)
         assert_includes(output, "Job default/example is not an enabled periodic job")
-        assert_equal("job inspect -namespace=default example\n", File.read("#{root}/commands"), output)
+        assert_equal("job inspect -namespace=default -json example\n", File.read("#{root}/commands"), output)
       end
 
       File.write("#{root}/commands", "")
@@ -118,7 +122,7 @@ class UploadPlanTest < Minitest::Test
       )
 
       refute(status.success?, output)
-      assert_equal("job inspect -namespace=default example\n", File.read("#{root}/commands"), output)
+      assert_equal("job inspect -namespace=default -json example\n", File.read("#{root}/commands"), output)
 
       File.write("#{root}/commands", "")
       output, status = Open3.capture2e(
@@ -128,7 +132,7 @@ class UploadPlanTest < Minitest::Test
       )
 
       assert(status.success?, output)
-      assert_equal("job inspect -namespace=default example\njob periodic force -namespace=default example\n", File.read("#{root}/commands"), output)
+      assert_equal("job inspect -namespace=default -json example\njob periodic force -namespace=default example\n", File.read("#{root}/commands"), output)
 
       if ENV["NOMAD_REAL_BINARY"]
         FileUtils.cp(ENV.fetch("NOMAD_REAL_BINARY"), "#{root}/bin/nomad")

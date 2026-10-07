@@ -1,5 +1,9 @@
 ## [Unreleased]
 
+## [0.16.4]
+
+- Request raw JSON when inspecting periodic jobs so the force task reads the deployed periodic configuration
+
 ## [0.16.3]
 
 - Add a generated `:force` task to launch a periodic child through the configured manager host and Nomad token

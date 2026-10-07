@@ -636,7 +636,7 @@ end
 
 def capistrano_nomad_force_job(name, **options)
   capistrano_nomad_ensure_options!(options)
-  job = JSON.parse(capistrano_nomad_capture_nomad_command(:job, :inspect, options, name, raise_on_non_zero_exit: true))
+  job = JSON.parse(capistrano_nomad_capture_nomad_command(:job, :inspect, options.merge(json: true), name, raise_on_non_zero_exit: true))
 
   unless job.dig("Periodic", "Enabled")
     raise ArgumentError, "Job #{options[:namespace]}/#{name} is not an enabled periodic job"
